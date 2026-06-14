@@ -1,0 +1,1032 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DWC 工班管理</title>
+<style>
+:root{
+  --blue:#2563eb; --blue-dark:#1d4ed8;
+  --orange:#f59e0b; --orange-dark:#d97706;
+  --green:#16a34a; --red:#dc2626;
+  --bg:#f3f4f6; --bg2:#eef2f7; --card:#ffffff;
+  --text:#1f2937; --muted:#6b7280; --line:#e5e7eb;
+  --radius:12px; --rsm:10px;
+  --c-dismantle:#2563eb; --c-convert:#7c3aed; --c-repair:#dc2626; --c-other:#6b7280;
+}
+*{box-sizing:border-box;margin:0;padding:0;font-family:"PingFang TC","Microsoft JhengHei","Noto Sans TC",sans-serif;}
+body{background:#cfd8e3;display:flex;justify-content:center;min-height:100vh;}
+.phone{width:100%;max-width:420px;background:var(--bg);min-height:100vh;display:flex;flex-direction:column;box-shadow:0 0 30px rgba(0,0,0,.15);}
+
+/* ── Home header ── */
+.home-header{background:var(--blue);color:#fff;padding:14px 16px 16px;}
+.header-top{display:flex;align-items:center;gap:12px;}
+.avatar{width:46px;height:46px;border-radius:50%;object-fit:cover;flex-shrink:0;border:2px solid rgba(255,255,255,.5);}
+.header-info{flex:1;}
+.header-info .name{font-size:17px;font-weight:700;line-height:1.3;}
+.header-info .pending{font-size:13px;opacity:.9;margin-top:2px;}
+.header-info .pending b{font-size:15px;}
+.role-badge{background:rgba(255,255,255,.2);border:1.5px solid rgba(255,255,255,.5);border-radius:99px;padding:5px 14px;font-size:12px;font-weight:700;cursor:pointer;color:#fff;white-space:nowrap;flex-shrink:0;}
+.role-badge:hover{background:rgba(255,255,255,.35);}
+.role-badge.is-engineer{background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.3);}
+.date-input{border:1px solid var(--blue);border-radius:6px;padding:4px 8px;font-size:14px;color:var(--text);background:#fff;width:100%;max-width:170px;}
+.eng-option{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border:1px solid var(--line);border-radius:8px;margin-bottom:8px;cursor:pointer;font-size:14px;font-weight:600;}
+.eng-option:hover{background:#eff6ff;border-color:var(--blue);}
+.eng-option .team-tag{font-size:11px;color:var(--muted);font-weight:400;}
+
+/* ── Detail/page header ── */
+.page-header{background:var(--blue);color:#fff;padding:16px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:10;}
+.page-header .back{background:none;border:none;color:#fff;font-size:22px;cursor:pointer;line-height:1;padding:2px 6px;}
+.page-header h1{font-size:18px;flex:1;text-align:center;margin-right:34px;}
+
+/* ── Search ── */
+.search-wrap{padding:12px 14px 0;}
+.search-box{background:#fff;border-radius:99px;display:flex;align-items:center;padding:4px 4px 4px 16px;box-shadow:0 1px 3px rgba(0,0,0,.08);}
+.search-box input{flex:1;border:none;outline:none;font-size:16px;padding:11px 6px;background:transparent;color:var(--text);}
+.search-box input::placeholder{color:#9ca3af;}
+.search-box .scan-btn{background:var(--blue);color:#fff;border:none;border-radius:99px;width:44px;height:44px;font-size:18px;display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer;}
+
+/* ── Category chips ── */
+.cats{display:flex;gap:8px;padding:12px 14px 0;flex-wrap:wrap;}
+.cat-chip{flex-shrink:0;display:flex;align-items:center;gap:6px;padding:9px 16px;border-radius:99px;font-size:14px;font-weight:700;background:#fff;color:var(--text);border:1.5px solid var(--line);cursor:pointer;white-space:nowrap;transition:.15s;}
+.cat-chip .dot{width:8px;height:8px;border-radius:50%;}
+.cat-chip .cnt{font-size:12px;font-weight:700;background:#f1f5f9;color:var(--muted);border-radius:99px;padding:1px 7px;}
+.cat-chip.active{border-color:transparent;}
+.cat-chip.active .cnt{background:rgba(255,255,255,.3);color:#fff;}
+.cat-chip[data-cat="all"].active{background:var(--text);color:#fff;}
+.cat-chip[data-cat="dismantle"].active{background:var(--c-dismantle);color:#fff;}
+.cat-chip[data-cat="convert"].active{background:var(--c-convert);color:#fff;}
+.cat-chip[data-cat="repair"].active{background:var(--c-repair);color:#fff;}
+.cat-chip[data-cat="other"].active{background:var(--c-other);color:#fff;}
+.cat-chip[data-cat="dismantle"] .dot{background:var(--c-dismantle);}
+.cat-chip[data-cat="convert"] .dot{background:var(--c-convert);}
+.cat-chip[data-cat="repair"] .dot{background:var(--c-repair);}
+.cat-chip[data-cat="other"] .dot{background:var(--c-other);}
+.cat-chip[data-cat="all"] .dot{display:none;}
+
+/* ── Filters ── */
+.filters{display:flex;gap:8px;padding:10px 14px 0;align-items:center;}
+.filter-pill{font-size:13px;font-weight:600;background:#fff;border:1px solid var(--line);border-radius:99px;padding:7px 14px;color:var(--text);cursor:pointer;}
+.filter-pill.active{background:#eff6ff;border-color:var(--blue);color:var(--blue);}
+.result-count{font-size:13px;color:var(--muted);padding:10px 14px 0;}
+
+/* ── Order list & cards ── */
+.list{padding:10px 14px 90px;display:flex;flex-direction:column;gap:10px;}
+.order-card{background:#fff;border-radius:var(--radius);padding:14px;box-shadow:0 1px 3px rgba(0,0,0,.06);border-left:5px solid var(--c-other);cursor:pointer;}
+.order-card[data-cat="dismantle"]{border-left-color:var(--c-dismantle);}
+.order-card[data-cat="convert"]{border-left-color:var(--c-convert);}
+.order-card[data-cat="repair"]{border-left-color:var(--c-repair);}
+.order-card .top-row{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:6px;}
+.order-card .store{font-size:16px;font-weight:700;color:var(--text);}
+.order-card .cat-tag{font-size:11px;font-weight:700;padding:3px 9px;border-radius:99px;color:#fff;flex-shrink:0;}
+.order-card[data-cat="dismantle"] .cat-tag{background:var(--c-dismantle);}
+.order-card[data-cat="convert"] .cat-tag{background:var(--c-convert);}
+.order-card[data-cat="repair"] .cat-tag{background:var(--c-repair);}
+.order-card[data-cat="other"] .cat-tag{background:var(--c-other);}
+.order-card .meta{font-size:13px;color:var(--muted);}
+.order-card .info-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px 10px;margin-top:8px;}
+.order-card .info-item{display:flex;flex-direction:column;gap:2px;}
+.order-card .info-item .lbl{font-size:11px;color:var(--muted);font-weight:500;}
+.order-card .info-item .val{font-size:13px;color:var(--text);font-weight:600;line-height:1.3;}
+.order-card .info-item.full{grid-column:1/-1;}
+.order-card .info-item .val.urgent{color:var(--red);}
+.order-card .status-row{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;}
+.status-badge{font-size:12px;font-weight:700;padding:3px 10px;border-radius:99px;}
+.status-badge.pending{background:#fef3c7;color:#92400e;}
+.status-badge.draft{background:#fffbeb;color:#92400e;border:1px solid #fde68a;}
+.status-badge.today{background:#fee2e2;color:#991b1b;}
+.status-badge.sent{background:#dcfce7;color:#166534;}
+
+/* ── Empty ── */
+.empty{text-align:center;padding:50px 20px;color:var(--muted);}
+.empty .icon{font-size:40px;margin-bottom:10px;}
+.empty p{font-size:14px;line-height:1.7;}
+
+/* ── Bottom nav ── */
+.bottom-nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:420px;background:#fff;border-top:1px solid var(--line);display:flex;padding:6px 4px;box-shadow:0 -2px 8px rgba(0,0,0,.06);z-index:20;}
+.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:7px 0;border-radius:10px;cursor:pointer;color:var(--muted);font-size:11px;font-weight:600;}
+.nav-item .icon{font-size:20px;}
+.nav-item.active{color:var(--blue);}
+
+/* ── Group cards ── */
+.group-card{background:#fff;border-radius:var(--radius);padding:16px;box-shadow:0 1px 3px rgba(0,0,0,.06);}
+.group-card .g-title{font-size:17px;font-weight:700;margin-bottom:8px;display:flex;align-items:center;gap:8px;}
+.group-card .g-title .dot{width:10px;height:10px;border-radius:50%;background:var(--blue);flex-shrink:0;}
+.group-card .g-members{font-size:13px;color:var(--muted);line-height:1.7;margin-bottom:10px;}
+.group-card .g-members b{color:var(--text);font-weight:600;}
+.group-card .g-pending{display:inline-flex;align-items:center;gap:6px;font-size:14px;font-weight:700;color:#92400e;background:#fef3c7;border-radius:99px;padding:6px 14px;}
+.group-card .g-pending b{font-size:17px;}
+
+/* ── Schedule page ── */
+.schedule-eng-wrap{padding:10px 14px 0;display:flex;gap:8px;flex-wrap:wrap;}
+.schedule-week-hdr{padding:10px 14px 6px;font-size:12px;font-weight:700;color:var(--muted);letter-spacing:.5px;border-top:1px solid var(--line);margin-top:4px;}
+.schedule-week-hdr:first-child{border-top:none;margin-top:0;}
+.schedule-day{display:flex;gap:12px;padding:6px 14px 10px;}
+.sch-date-col{width:40px;flex-shrink:0;text-align:center;padding-top:4px;}
+.sch-weekday{font-size:11px;color:var(--muted);font-weight:600;}
+.sch-daynum{font-size:24px;font-weight:700;color:var(--text);line-height:1.1;}
+.sch-daynum.today{background:var(--blue);color:#fff;border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;font-size:18px;margin:0 auto;}
+.sch-events{flex:1;display:flex;flex-direction:column;gap:7px;}
+.sch-event{border-radius:8px;padding:10px 12px;cursor:pointer;color:#fff;transition:.1s;}
+.sch-event:active{opacity:.85;}
+.sch-event[data-cat="dismantle"]{background:var(--c-dismantle);}
+.sch-event[data-cat="convert"]{background:var(--c-convert);}
+.sch-event[data-cat="repair"]{background:var(--c-repair);}
+.sch-event[data-cat="other"]{background:#64748b;}
+.sch-event-store{font-size:14px;font-weight:700;line-height:1.3;}
+.sch-event-meta{font-size:12px;opacity:.85;margin-top:3px;}
+.sch-event-eng{font-size:11px;opacity:.75;margin-top:2px;}
+.schedule-empty{text-align:center;padding:50px 20px;color:var(--muted);}
+.sch-month-bar{background:var(--blue);color:#fff;padding:12px 16px;display:flex;align-items:center;gap:12px;}
+.sch-month-bar .month-label{font-size:20px;font-weight:700;flex:1;}
+.sch-month-bar .month-nav{background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:99px;width:32px;height:32px;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+
+/* ══════════════════════════════════════
+   DETAIL PAGE STYLES
+══════════════════════════════════════ */
+.screen{display:none;flex-direction:column;flex:1;background:var(--bg2);}
+.screen.active{display:flex;}
+.content{padding:14px;flex:1;display:flex;flex-direction:column;gap:14px;padding-bottom:30px;}
+.card{background:var(--card);border-radius:var(--rsm);padding:16px;box-shadow:0 1px 3px rgba(0,0,0,.06);}
+.row{display:flex;gap:8px;padding:8px 0;font-size:14px;border-bottom:1px solid var(--line);}
+.row:last-of-type{border-bottom:none;}
+.row .label{color:var(--muted);font-weight:600;min-width:80px;font-size:13px;flex-shrink:0;}
+.row .value{color:var(--text);flex:1;}
+.section-title{font-size:16px;font-weight:700;margin-bottom:10px;}
+.badge{display:inline-block;font-size:12px;font-weight:700;padding:3px 10px;border-radius:99px;}
+.badge.count{background:#eff6ff;color:var(--blue);}
+.btn{display:block;width:100%;border:none;border-radius:var(--rsm);padding:14px;font-size:16px;font-weight:700;cursor:pointer;text-align:center;}
+.btn.primary{background:var(--blue);color:#fff;}
+.btn.primary:active{background:var(--blue-dark);}
+.btn.secondary{background:#fff;color:var(--text);border:1px solid var(--line);}
+.btn.warn{background:var(--orange);color:#fff;}
+.btn.warn:active{background:var(--orange-dark);}
+.btn.ghost-blue{background:#eff6ff;color:var(--blue);border:1px solid #bfdbfe;}
+.btn.small{display:inline-block;width:auto;padding:9px 16px;font-size:14px;}
+.field{margin-bottom:14px;}
+.field label{display:block;font-size:14px;font-weight:700;margin-bottom:6px;}
+.field label .req{color:var(--red);}
+.field label .hint{font-weight:400;color:var(--muted);font-size:12px;}
+.field input[type="datetime-local"],.field input[type="text"],.field textarea{width:100%;border:1px solid var(--line);border-radius:8px;padding:11px 12px;font-size:15px;background:#fff;color:var(--text);}
+.field textarea{min-height:96px;resize:vertical;}
+.field input:focus,.field textarea:focus{outline:2px solid #bfdbfe;border-color:var(--blue);}
+.photo-counts{text-align:center;font-size:15px;line-height:1.9;padding:4px 0;}
+.dropzone{border:2px dashed #94a3b8;border-radius:8px;background:#f8fafc;color:var(--muted);text-align:center;padding:22px 10px;font-size:14px;line-height:1.7;cursor:pointer;margin-top:8px;}
+.dropzone:active{border-color:var(--blue);background:#eff6ff;}
+.cat-photos{display:flex;flex-direction:column;gap:12px;margin-top:12px;}
+.cat-photo{display:flex;gap:10px;align-items:flex-start;}
+.cat-photo .thumb{position:relative;width:96px;flex-shrink:0;}
+.cat-photo .thumb img{width:96px;height:120px;object-fit:cover;border-radius:6px;border:1px solid var(--line);display:block;}
+.cat-photo .thumb .del-ph{position:absolute;top:-8px;right:-8px;background:#fff;color:var(--red);border:2px solid var(--red);border-radius:50%;width:24px;height:24px;font-size:13px;font-weight:700;cursor:pointer;line-height:1;display:flex;align-items:center;justify-content:center;}
+.cat-photo .meta{flex:1;display:flex;flex-direction:column;gap:6px;}
+.cat-photo .meta input{border:1px solid var(--line);border-radius:6px;padding:9px 10px;font-size:14px;width:100%;}
+.photo-summary{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;}
+.photo-summary .chip{font-size:13px;background:#f1f5f9;border:1px solid var(--line);border-radius:99px;padding:5px 12px;color:var(--text);}
+.photo-summary .chip b{color:var(--blue);}
+.equip-item{border:1px solid var(--line);border-radius:8px;padding:12px;margin-top:10px;position:relative;background:#fafbfc;}
+.equip-item .del-eq{position:absolute;top:8px;right:8px;background:none;border:none;color:var(--red);font-size:14px;cursor:pointer;font-weight:700;}
+.equip-item .equip-row{display:flex;gap:8px;margin-bottom:8px;}
+.equip-item .equip-row:last-child{margin-bottom:0;}
+.equip-item input,.equip-item select{flex:1;border:1px solid var(--line);border-radius:6px;padding:9px 10px;font-size:14px;background:#fff;}
+.equip-item input.qty{max-width:90px;}
+.actions{display:flex;flex-direction:column;gap:10px;padding-bottom:24px;}
+.banner{border-radius:var(--rsm);padding:12px 14px;font-size:14px;display:flex;gap:8px;align-items:flex-start;line-height:1.5;}
+.banner.draft{background:#fffbeb;border:1px solid #fde68a;color:#92400e;}
+.banner.sent{background:#f0fdf4;border:1px solid #bbf7d0;color:#166534;}
+.modal-mask{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;z-index:50;padding:24px;}
+.modal-mask.show{display:flex;}
+.modal{background:#fff;border-radius:14px;padding:22px;width:100%;max-width:340px;}
+.modal h3{font-size:17px;margin-bottom:10px;}
+.modal p{font-size:14px;color:var(--muted);line-height:1.6;margin-bottom:18px;}
+.modal .modal-btns{display:flex;gap:10px;}
+.modal .modal-btns .btn{padding:11px;font-size:15px;}
+.toast{position:fixed;bottom:32px;left:50%;transform:translateX(-50%);background:rgba(31,41,55,.92);color:#fff;padding:11px 20px;border-radius:99px;font-size:14px;z-index:60;opacity:0;transition:opacity .25s;pointer-events:none;white-space:nowrap;}
+.toast.show{opacity:1;}
+.readonly-note{font-size:13px;color:var(--muted);margin-top:4px;}
+.summary-list{font-size:14px;color:var(--text);line-height:1.8;}
+.summary-list b{font-weight:700;}
+.done-photo-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:8px;}
+.done-photo-grid .ph{border-radius:6px;overflow:hidden;border:1px solid var(--line);}
+.done-photo-grid .ph img{width:100%;aspect-ratio:3/4;object-fit:cover;display:block;}
+.done-photo-grid .ph .cap{font-size:11px;color:var(--muted);padding:3px 5px;background:#fff;line-height:1.3;}
+</style>
+</head>
+<body>
+
+<!-- ══════════ HOME PAGE ══════════ -->
+<div class="phone" id="page-home">
+  <div class="home-header">
+    <div class="header-top">
+      <img class="avatar" src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop&crop=faces" alt="Emily 庭玲">
+      <div class="header-info">
+        <div class="name">Emily</div>
+        <div class="pending">待處理工單:<b>95</b> 件</div>
+      </div>
+      <div class="role-badge" id="role-badge" onclick="openRoleModal()">管理者</div>
+    </div>
+  </div>
+  <div class="search-wrap">
+    <div class="search-box">
+      <input type="text" id="search-input" placeholder="輸入門市名稱、地址或工單編號" inputmode="search">
+      <button class="scan-btn" onclick="alert('掃描功能(原型未實作)')">▣</button>
+    </div>
+  </div>
+  <div class="cats" id="cat-chips">
+    <button class="cat-chip active" data-cat="all" onclick="setCat('all')">全部 <span class="cnt">95</span></button>
+    <button class="cat-chip" data-cat="dismantle" onclick="setCat('dismantle')"><span class="dot"></span>拆/裝/移 <span class="cnt">63</span></button>
+    <button class="cat-chip" data-cat="convert" onclick="setCat('convert')"><span class="dot"></span>轉換 <span class="cnt">14</span></button>
+    <button class="cat-chip" data-cat="repair" onclick="setCat('repair')"><span class="dot"></span>維修 <span class="cnt">16</span></button>
+    <button class="cat-chip" data-cat="other" onclick="setCat('other')"><span class="dot"></span>其他 <span class="cnt">2</span></button>
+  </div>
+  <div class="filters">
+    <button class="filter-pill active" data-filter="all" onclick="setFilter('all')">全部工單</button>
+    <button class="filter-pill" data-filter="today" onclick="setFilter('today')">今日施作</button>
+    <button class="filter-pill" data-filter="draft" onclick="setFilter('draft')">我的草稿</button>
+  </div>
+  <div class="filters" id="team-filters"></div>
+  <div class="result-count" id="result-count"></div>
+  <div class="list" id="order-list"></div>
+  <div class="bottom-nav">
+    <div class="nav-item active" onclick="goPage('home')"><span class="icon">🏠</span>首頁</div>
+    <div class="nav-item nav-groups-item" onclick="goPage('groups')"><span class="icon">👥</span>工班列表</div>
+    <div class="nav-item" onclick="alert('掃描(原型未實作)')"><span class="icon">▣</span>掃描</div>
+    <div class="nav-item" onclick="goPage('my')"><span class="icon">📅</span>排程</div>
+  </div>
+</div>
+
+<!-- ══════════ GROUPS PAGE ══════════ -->
+<div class="phone" id="page-groups" style="display:none;">
+  <div class="page-header">
+    <button class="back" onclick="goPage('home')">←</button>
+    <h1>工班群組列表</h1>
+    <div style="width:34px;"></div>
+  </div>
+  <div class="list" id="group-list" style="padding-top:14px;"></div>
+  <div class="bottom-nav">
+    <div class="nav-item" onclick="goPage('home')"><span class="icon">🏠</span>首頁</div>
+    <div class="nav-item active" onclick="goPage('groups')"><span class="icon">👥</span>工班列表</div>
+    <div class="nav-item" onclick="alert('掃描(原型未實作)')"><span class="icon">▣</span>掃描</div>
+    <div class="nav-item" onclick="goPage('my')"><span class="icon">📅</span>排程</div>
+  </div>
+</div>
+
+<!-- ══════════ MY SCHEDULE PAGE ══════════ -->
+<div class="phone" id="page-my" style="display:none;">
+  <div class="sch-month-bar">
+    <button class="month-nav" onclick="shiftMonth(-1)">‹</button>
+    <div class="month-label" id="sch-month-label"></div>
+    <button class="month-nav" onclick="shiftMonth(1)">›</button>
+  </div>
+  <div id="schedule-eng-wrap" class="schedule-eng-wrap"></div>
+  <div id="schedule-list" style="padding-bottom:90px;overflow-y:auto;flex:1;"></div>
+  <div class="bottom-nav">
+    <div class="nav-item" onclick="goPage('home')"><span class="icon">🏠</span>首頁</div>
+    <div class="nav-item nav-groups-item" onclick="goPage('groups')"><span class="icon">👥</span>工班列表</div>
+    <div class="nav-item" onclick="alert('掃描(原型未實作)')"><span class="icon">▣</span>掃描</div>
+    <div class="nav-item active" onclick="goPage('my')"><span class="icon">📅</span>排程</div>
+  </div>
+</div>
+
+<!-- ══════════ DETAIL PAGE (4 screens) ══════════ -->
+<div class="phone" id="page-detail" style="display:none;">
+
+  <!-- Screen 1: 工單詳情 -->
+  <div class="screen" id="screen-detail">
+    <div class="page-header">
+      <button class="back" onclick="goPage('home')">←</button>
+      <h1>工單詳情</h1>
+    </div>
+    <div class="content">
+      <div id="status-banner-area"></div>
+
+      <div class="card">
+        <div class="section-title">門市資訊</div>
+        <div class="row"><div class="label">店名</div><div class="value" id="d-store"></div></div>
+        <div class="row"><div class="label">店號</div><div class="value" id="d-store-no"></div></div>
+        <div class="row"><div class="label">地址</div><div class="value" id="d-address"></div></div>
+        <div class="row"><div class="label">電話</div><div class="value" id="d-phone"></div></div>
+        <div id="detail-btn-area" style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;"></div>
+      </div>
+
+      <div class="card">
+        <div class="section-title">派工資訊</div>
+        <div class="row"><div class="label">工單 ID</div><div class="value" id="d-id"></div></div>
+        <div class="row"><div class="label">派工分類</div><div class="value" id="d-cat-label"></div></div>
+        <div class="row"><div class="label">負責工班</div><div class="value" id="d-team"></div></div>
+        <div class="row"><div class="label">工程師</div><div class="value" id="d-engineer"></div></div>
+        <div class="row"><div class="label">螢幕位置</div><div class="value" id="d-screen-pos"></div></div>
+        <div class="row"><div class="label">任務內容</div><div class="value" id="d-task-content"></div></div>
+        <div class="row"><div class="label">派工日期</div><div class="value" id="d-dispatch-date"></div></div>
+        <div class="row"><div class="label">指定日期</div><div class="value" id="d-spec-date"></div></div>
+        <div class="row">
+          <div class="label">預計入店</div>
+          <div class="value">
+            <span id="d-expected-date"></span>
+            <input type="date" id="d-expected-date-input" class="date-input" style="display:none;" onchange="saveExpectedDate(this.value)">
+          </div>
+        </div>
+      </div>
+
+      <div id="admin-action-area"></div>
+
+      <div class="actions">
+        <button class="btn primary" id="btn-continue" onclick="goReport()">繼續處理</button>
+        <button class="btn secondary" onclick="goPage('home')">返回列表</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Screen 2: 回報派工狀況 -->
+  <div class="screen" id="screen-report">
+    <div class="page-header">
+      <button class="back" onclick="backToDetail(true)">←</button>
+      <h1>回報派工狀況</h1>
+    </div>
+    <div class="content">
+      <div class="banner draft" id="report-draft-banner" style="display:none;">
+        📝 <span>這是尚未送出的<b>草稿</b>,修改後可再次儲存或直接送出。</span>
+      </div>
+      <div class="card">
+        <div class="field">
+          <label>抵達時間 <span class="req">*</span></label>
+          <input type="datetime-local" id="f-arrive">
+        </div>
+        <div class="field" style="margin-bottom:0;">
+          <label>離店時間</label>
+          <input type="datetime-local" id="f-leave">
+        </div>
+      </div>
+      <div class="card">
+        <div class="section-title">派工照片</div>
+        <div class="photo-summary" id="photo-summary"></div>
+        <button class="btn ghost-blue" style="margin-top:12px;" onclick="goPhotos()">📷 上傳 / 管理照片</button>
+      </div>
+      <div class="card">
+        <div class="section-title">設備清單</div>
+        <div id="equip-list"></div>
+        <button class="btn ghost-blue" style="margin-top:12px;" onclick="addEquip()">＋ 新增設備</button>
+      </div>
+      <div class="card">
+        <div class="field" style="margin-bottom:0;">
+          <label>現場處理備註 <span class="req">*</span> <span class="hint">(送驗收前一定要填寫)</span></label>
+          <textarea id="f-note" placeholder="請輸入工作完成情況或其他備註..."></textarea>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="btn warn" onclick="saveDraft()">儲存草稿</button>
+        <button class="btn primary" onclick="askSubmit()">送出</button>
+        <button class="btn secondary" onclick="backToDetail(true)">返回詳情</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Screen 3: 派工照片 -->
+  <div class="screen" id="screen-photos">
+    <div class="page-header">
+      <button class="back" onclick="backFromPhotos()">←</button>
+      <h1>派工照片上傳</h1>
+    </div>
+    <div class="content">
+      <div class="photo-counts">
+        新增照片數量 (<span id="cnt-new">0</span>)<br>
+        目前照片總數 (<span id="cnt-total">0</span>)
+      </div>
+      <div id="photo-cats"></div>
+      <div class="actions">
+        <button class="btn primary" onclick="backFromPhotos(true)">儲存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Screen 4: 已送出 -->
+  <div class="screen" id="screen-done">
+    <div class="page-header">
+      <button class="back" onclick="backToDetail(false)">←</button>
+      <h1>回報派工狀況</h1>
+    </div>
+    <div class="content">
+      <div class="banner sent">✅ <span>回報已送出,等待驗收。內容已鎖定,如需修改請聯繫管理端。</span></div>
+      <div class="card">
+        <div class="section-title">回報內容</div>
+        <div class="summary-list" id="done-summary"></div>
+      </div>
+      <div id="done-photo-cards"></div>
+      <div class="card">
+        <div class="section-title">設備清單</div>
+        <div class="summary-list" id="done-equips"></div>
+      </div>
+      <div class="actions">
+        <button class="btn secondary" onclick="backToDetail(false)">返回詳情</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Role switch modal -->
+<div class="modal-mask" id="modal-role">
+  <div class="modal">
+    <h3>切換角色</h3>
+    <p>選擇登入身份以切換對應權限（原型示範用）</p>
+    <div class="modal-btns" style="flex-direction:column;gap:10px;">
+      <button class="btn primary" onclick="switchRoleTo('admin',true)">管理者</button>
+      <button class="btn secondary" onclick="switchRoleTo('engineer',true)">工程師</button>
+    </div>
+  </div>
+</div>
+
+<!-- Engineer assign modal -->
+<div class="modal-mask" id="modal-engineer">
+  <div class="modal">
+    <h3 id="assign-modal-title">指定工程師</h3>
+    <div id="engineer-select-list" style="max-height:260px;overflow-y:auto;margin-bottom:14px;"></div>
+    <button class="btn secondary" onclick="closeModal('modal-engineer')">取消</button>
+  </div>
+</div>
+
+<!-- Modals -->
+<div class="modal-mask" id="modal-submit">
+  <div class="modal">
+    <h3>確定要送出回報嗎?</h3>
+    <p id="submit-summary"></p>
+    <div class="modal-btns">
+      <button class="btn secondary" onclick="closeModal('modal-submit')">再想想</button>
+      <button class="btn primary" onclick="confirmSubmit()">確定送出</button>
+    </div>
+  </div>
+</div>
+<div class="modal-mask" id="modal-unsaved">
+  <div class="modal">
+    <h3>內容尚未儲存</h3>
+    <p>你有修改還沒儲存,要先存成草稿嗎?</p>
+    <div class="modal-btns">
+      <button class="btn secondary" onclick="discardAndBack()">不儲存</button>
+      <button class="btn warn" onclick="saveDraftAndBack()">存草稿</button>
+    </div>
+  </div>
+</div>
+
+<input type="file" id="photo-input" accept="image/*" multiple style="display:none">
+<div class="toast" id="toast"></div>
+
+<script>
+/* ── Data ── */
+const ORDERS = [
+  {id:'335-2', storeNo:'S001', store:'金積新開店', phone:'04-23001234', cat:'dismantle', catLabel:'拆/裝/移', address:'台中市西屯區金山路二段100號', team:'柏南', engineer:'H', screenPos:'入口右側', taskContent:'新開裝機 55吋×5台 (OC×1/MB×2/W-I×2)', dispatchDate:'2026-06-12', specDate:'2026-06-13', expectedDate:'2026-06-13', size:'55吋×5台', urgent:true,  status:'today'},
+  {id:'318-1', storeNo:'S002', store:'南屯旗艦店', phone:'04-23215678', cat:'repair',    catLabel:'維修',     address:'台中市南屯區大墩路500號',      team:'柏南', engineer:'D', screenPos:'收銀台後方',   taskContent:'43吋螢幕無法開機，需現場排查',          dispatchDate:'2026-06-12', specDate:'2026-06-13', expectedDate:'2026-06-13', size:'43吋×1台', urgent:true,  status:'today'},
+  {id:'301-4', storeNo:'S003', store:'大雅加盟店', phone:'04-25691234', cat:'dismantle', catLabel:'拆/裝/移', address:'台中市大雅區中清路三段88號',    team:'柏北', engineer:'E', screenPos:'門口左側',     taskContent:'拆除舊機並安裝新機 32吋×3台',           dispatchDate:'2026-06-13', specDate:'2026-06-14', expectedDate:'2026-06-14', size:'32吋×3台', urgent:false, status:'draft'},
+  {id:'290-1', storeNo:'S004', store:'文心忠明店', phone:'04-23271111', cat:'convert',   catLabel:'轉換',     address:'台中市西區忠明南路300號',      team:'柏中', engineer:'G', screenPos:'中島展示區',   taskContent:'系統轉換升級 55吋×2台',                 dispatchDate:'2026-06-13', specDate:'2026-06-14', expectedDate:'2026-06-14', size:'55吋×2台', urgent:false, status:'pending'},
+  {id:'288-3', storeNo:'S005', store:'北屯松竹店', phone:'04-22301234', cat:'repair',    catLabel:'維修',     address:'台中市北屯區松竹路一段22號',    team:'柏北', engineer:'A', screenPos:'牆面右側',     taskContent:'24吋螢幕畫面閃爍，需更換零件',          dispatchDate:'2026-06-14', specDate:'2026-06-15', expectedDate:'2026-06-15', size:'24吋×1台', urgent:false, status:'pending'},
+  {id:'275-2', storeNo:'S006', store:'西屯新開店', phone:'04-27001234', cat:'dismantle', catLabel:'拆/裝/移', address:'台中市西屯區西安路二段45號',    team:'柏花', engineer:'F', screenPos:'全區共4處',   taskContent:'新開裝機 55吋×4台',                     dispatchDate:'2026-06-14', specDate:'2026-06-15', expectedDate:'2026-06-15', size:'55吋×4台', urgent:false, status:'pending'},
+  {id:'260-1', storeNo:'S007', store:'潭子工業店', phone:'04-25211234', cat:'other',     catLabel:'其他',     address:'台中市潭子區中山路三段7號',     team:'柏中', engineer:'C', screenPos:'—',           taskContent:'其他現場確認事項',                      dispatchDate:'2026-06-15', specDate:'2026-06-16', expectedDate:'2026-06-16', size:'-',       urgent:false, status:'pending'},
+  {id:'255-5', storeNo:'S008', store:'豐原圓環店', phone:'04-25261234', cat:'convert',   catLabel:'轉換',     address:'台中市豐原區圓環東路188號',    team:'柏北', engineer:'B', screenPos:'二樓展示區',   taskContent:'系統轉換升級 43吋×2台',                 dispatchDate:'2026-06-15', specDate:'2026-06-16', expectedDate:'2026-06-16', size:'43吋×2台', urgent:false, status:'pending'},
+];
+const GROUPS = [
+  {name:'柏北', managers:['A','B'], engineers:['C','D','E','F'], pending:128},
+  {name:'柏中', managers:['A','B'], engineers:['C','G','E','F'], pending:58},
+  {name:'柏南', managers:['A','B'], engineers:['C','H','E','F'], pending:110},
+  {name:'柏花', managers:['A','B'], engineers:['C','D','E','F'], pending:10},
+];
+const CATS = ['施工前','施工後','驗收單','其他'];
+
+/* ── Home page state ── */
+let curCat = 'all', curFilter = 'all', curTeam = 'all';
+
+function setCat(cat){
+  curCat = cat;
+  document.querySelectorAll('.cat-chip').forEach(c => c.classList.toggle('active', c.dataset.cat === cat));
+  render();
+}
+function setFilter(f){
+  curFilter = f;
+  document.querySelectorAll('.filter-pill').forEach(c => c.classList.toggle('active', c.dataset.filter === f));
+  render();
+}
+function setTeam(team){
+  curTeam = team;
+  document.querySelectorAll('.team-pill').forEach(c => c.classList.toggle('active', c.dataset.team === team));
+  render();
+}
+function renderTeamFilters(){
+  const teams = ['all', ...new Set(ORDERS.map(o => o.team))];
+  document.getElementById('team-filters').innerHTML = teams.map(t =>
+    '<button class="filter-pill team-pill'+(t==='all'?' active':'')+'" data-team="'+t+'" onclick="setTeam(\''+t+'\')">'+
+      (t==='all' ? '👥 全部工班' : t)+
+    '</button>'
+  ).join('');
+}
+document.getElementById('search-input').addEventListener('input', render);
+
+function render(){
+  const q = document.getElementById('search-input').value.trim();
+  let items = ORDERS.filter(o => {
+    if(curCat !== 'all' && o.cat !== curCat) return false;
+    if(curTeam !== 'all' && o.team !== curTeam) return false;
+    if(curFilter === 'today' && !['today'].includes(getRuntimeStatus(o.id, o.status))) return false;
+    if(curFilter === 'draft'  && getRuntimeStatus(o.id, o.status) !== 'draft') return false;
+    if(q && !(o.store.includes(q) || o.id.includes(q) || o.address.includes(q))) return false;
+    return true;
+  });
+  document.getElementById('result-count').textContent = q
+    ? '搜尋「'+q+'」,共 '+items.length+' 筆'
+    : '共 '+items.length+' 筆'+(curFilter==='all'&&curCat==='all'?',顯示最近 / 最緊急的工單':'');
+  const list = document.getElementById('order-list');
+  if(!items.length){
+    list.innerHTML = '<div class="empty"><div class="icon">🔍</div><p>找不到符合的工單。</p></div>';
+    return;
+  }
+  list.innerHTML = items.map(o => {
+    const rs = getRuntimeStatus(o.id, o.status);
+    let badges = '';
+    if(rs === 'approved') badges = '<span class="status-badge sent">✅ 已驗收</span>';
+    else if(rs === 'sent')    badges = '<span class="status-badge sent">📤 待覆核</span>';
+    else if(rs === 'draft')   badges = '<span class="status-badge draft">📝 草稿未送出</span>';
+    else if(rs === 'today')   badges = '<span class="status-badge today">今日施作</span>';
+    else                      badges = '<span class="status-badge pending">待處理</span>';
+    return '<div class="order-card" data-cat="'+o.cat+'" onclick="openOrder(\''+o.id+'\')">'+
+      '<div class="top-row"><div class="store">'+o.store+'</div><div class="cat-tag">'+o.catLabel+'</div></div>'+
+      '<div class="meta">工單 #'+o.id+(o.size&&o.size!=='-'?' ・ '+o.size:'')+'</div>'+
+      '<div class="info-grid">'+
+        '<div class="info-item"><span class="lbl">工班</span><span class="val">'+o.team+'</span></div>'+
+        '<div class="info-item"><span class="lbl">工程師</span><span class="val">'+o.engineer+'</span></div>'+
+        '<div class="info-item"><span class="lbl">派工日期</span><span class="val">'+o.dispatchDate+'</span></div>'+
+        '<div class="info-item"><span class="lbl">指定日期</span><span class="val'+(o.urgent?' urgent':'')+'">'+o.specDate+'</span></div>'+
+        '<div class="info-item full"><span class="lbl">地址</span><span class="val">'+o.address+'</span></div>'+
+      '</div>'+
+      '<div class="status-row">'+badges+'</div>'+
+    '</div>';
+  }).join('');
+}
+
+function getRuntimeStatus(id, defaultStatus){
+  const rs = orderStates[id];
+  if(rs && rs.status !== 'new') return rs.status;
+  return defaultStatus;
+}
+const STATUS_LABEL = {today:'今日施作', draft:'草稿未送出', pending:'待處理', sent:'待覆核', approved:'已驗收'};
+
+/* ── Groups page ── */
+function renderGroups(){
+  document.getElementById('group-list').innerHTML = GROUPS.map(g =>
+    '<div class="group-card">'+
+      '<div class="g-title"><span class="dot"></span>群組：'+g.name+'</div>'+
+      '<div class="g-members"><b>管理者：</b>'+g.managers.join('、')+'</div>'+
+      '<div class="g-members"><b>工程師：</b>'+g.engineers.join('、')+'</div>'+
+      '<div class="g-pending">待處理工單：<b>'+g.pending+'</b> 件</div>'+
+    '</div>'
+  ).join('');
+}
+
+/* ── Page navigation ── */
+function goPage(page){
+  document.getElementById('page-home').style.display   = page==='home'   ? 'flex' : 'none';
+  document.getElementById('page-groups').style.display = page==='groups' ? 'flex' : 'none';
+  document.getElementById('page-detail').style.display = page==='detail' ? 'flex' : 'none';
+  document.getElementById('page-my').style.display     = page==='my'     ? 'flex' : 'none';
+  window.scrollTo(0,0);
+  if(page==='groups') renderGroups();
+  if(page==='home')   render();
+  if(page==='my')     renderSchedule();
+}
+
+/* ── Role ── */
+let currentRole = 'admin'; // 'admin' | 'engineer'
+
+function openRoleModal(){ $('modal-role').classList.add('show'); }
+function switchRoleTo(role, fromModal){
+  currentRole = role;
+  const badge = $('role-badge');
+  badge.textContent = role === 'admin' ? '管理者' : '工程師';
+  badge.className = 'role-badge' + (role === 'engineer' ? ' is-engineer' : '');
+  document.querySelectorAll('.nav-groups-item').forEach(el => {
+    el.style.display = role === 'admin' ? '' : 'none';
+  });
+  if(fromModal) closeModal('modal-role');
+  if(currentOrderId) renderDetailActions();
+}
+
+/* ── Detail page state ── */
+const orderStates = {};
+let currentOrderId = null;
+let state = null;
+let dirty = false;
+let activeCat = null;
+const $ = id => document.getElementById(id);
+
+function getOrderState(id){
+  if(!orderStates[id]){
+    const o = ORDERS.find(x => x.id === id);
+    orderStates[id] = {
+      status: (o && o.status==='draft') ? 'draft' : 'new',
+      arrive:'', leave:'', note:'',
+      photos:{'施工前':[],'施工後':[],'驗收單':[],'其他':[]},
+      equips:[], draftTime:'', sentTime:''
+    };
+  }
+  return orderStates[id];
+}
+
+function openOrder(id){
+  currentOrderId = id;
+  state = getOrderState(id);
+  populateOrderInfo();
+  renderDetailBanner();
+  renderDetailActions();
+  goPage('detail');
+  showScreen('screen-detail');
+}
+
+function populateOrderInfo(){
+  const o = ORDERS.find(x => x.id === currentOrderId);
+  if(!o) return;
+  $('d-store').textContent         = o.store;
+  $('d-store-no').textContent      = o.storeNo;
+  $('d-address').textContent       = o.address;
+  $('d-phone').textContent         = o.phone;
+  $('d-id').textContent            = o.id;
+  $('d-cat-label').textContent     = o.catLabel;
+  $('d-team').textContent          = o.team;
+  $('d-engineer').textContent      = o.engineer || '未指派';
+  $('d-screen-pos').textContent    = o.screenPos || '—';
+  $('d-task-content').textContent  = o.taskContent || '—';
+  $('d-dispatch-date').textContent = o.dispatchDate;
+  $('d-spec-date').textContent     = o.specDate;
+}
+
+function renderDetailActions(){
+  const o = ORDERS.find(x => x.id === currentOrderId);
+  if(!o) return;
+
+  /* 門市資訊按鈕區 */
+  const btnArea = $('detail-btn-area');
+  if(currentRole === 'admin'){
+    const engBtn = o.engineer
+      ? '<button class="btn ghost-blue small" onclick="openAssignModal(\'change\')">變更工程師</button>'
+      : '<button class="btn ghost-blue small" onclick="openAssignModal(\'assign\')">指定工程師</button>';
+    btnArea.innerHTML = engBtn +
+      '<button class="btn warn small" onclick="openAssignModal(\'team\')">變更派遣工班</button>' +
+      '<button class="btn warn small">申請二次入店</button>';
+  } else {
+    btnArea.innerHTML = '<button class="btn warn small">申請二次入店</button>';
+  }
+
+  /* 預計入店日期 — 兩種角色都可編輯 */
+  const dateSpan  = $('d-expected-date');
+  const dateInput = $('d-expected-date-input');
+  dateSpan.style.display  = 'none';
+  dateInput.style.display = '';
+  dateInput.value = o.expectedDate || '';
+
+  /* 管理者覆核區 */
+  const adminArea = $('admin-action-area');
+  if(currentRole === 'admin' && state && state.status === 'sent'){
+    adminArea.innerHTML = '<button class="btn primary" style="background:#16a34a;" onclick="adminApprove()">✅ 覆核完成，送出驗收</button>';
+  } else if(state && state.status === 'approved'){
+    adminArea.innerHTML = '<div class="banner sent">✅ <span>已覆核完成('+(state.approvedTime||'')+')，已送出驗收。</span></div>';
+  } else {
+    adminArea.innerHTML = '';
+  }
+
+  /* 主要操作按鈕 */
+  const continueBtn = $('btn-continue');
+  if(state && (state.status === 'sent' || state.status === 'approved')){
+    continueBtn.textContent = '查看回報內容';
+  } else if(currentRole === 'admin' && !(state && state.status === 'draft')){
+    continueBtn.textContent = '填寫 / 查看回報';
+  } else {
+    continueBtn.textContent = state && state.status === 'draft' ? '繼續處理(編輯草稿)' : '繼續處理';
+  }
+}
+
+function saveExpectedDate(val){
+  const o = ORDERS.find(x => x.id === currentOrderId);
+  if(o){ o.expectedDate = val; showToast('預計入店日期已儲存'); }
+}
+
+function adminApprove(){
+  state.status = 'approved';
+  state.approvedTime = nowStr();
+  showToast('已覆核，送出驗收');
+  renderDetailBanner();
+}
+
+function openAssignModal(mode){
+  if(mode === 'team'){
+    $('assign-modal-title').textContent = '變更派遣工班';
+    $('engineer-select-list').innerHTML = GROUPS.map(g =>
+      '<div class="eng-option" onclick="selectTeam(\''+g.name+'\')">'+g.name+
+        '<span class="team-tag">'+g.members.length+' 人</span></div>'
+    ).join('');
+  } else {
+    $('assign-modal-title').textContent = mode === 'assign' ? '指定工程師' : '變更工程師';
+    const engineers = GROUPS.flatMap(g => g.members.map(m => ({name:m, team:g.name})));
+    const unique = [...new Map(engineers.map(e => [e.name, e])).values()];
+    $('engineer-select-list').innerHTML = unique.map(e =>
+      '<div class="eng-option" onclick="selectEngineer(\''+e.name+'\')">'+e.name+
+        '<span class="team-tag">'+e.team+'</span></div>'
+    ).join('');
+  }
+  $('modal-engineer').classList.add('show');
+}
+
+function selectEngineer(name){
+  const o = ORDERS.find(x => x.id === currentOrderId);
+  if(o){ o.engineer = name; $('d-engineer').textContent = name; }
+  closeModal('modal-engineer');
+  showToast('工程師已指派：' + name);
+  renderDetailActions();
+}
+
+function selectTeam(name){
+  const o = ORDERS.find(x => x.id === currentOrderId);
+  if(o){ o.team = name; $('d-team').textContent = name; }
+  closeModal('modal-engineer');
+  showToast('工班已變更：' + name);
+  renderDetailActions();
+}
+
+function showScreen(id){
+  document.querySelectorAll('#page-detail .screen').forEach(s => s.classList.remove('active'));
+  $(id).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+function showToast(msg){
+  const t = $('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 1800);
+}
+
+function photoTotal(){ return CATS.reduce((s,c) => s+state.photos[c].length, 0); }
+function photoNew(){   return CATS.reduce((s,c) => s+state.photos[c].filter(p=>p.isNew).length, 0); }
+
+function renderDetailBanner(){
+  const area = $('status-banner-area');
+  if(state.status==='draft'){
+    area.innerHTML = '<div class="banner draft">📝 <span>已儲存草稿('+state.draftTime+'),照片 '+photoTotal()+' 張。<br>尚未送出,點「繼續處理」可修改後送出。</span></div>';
+  } else if(state.status==='sent'){
+    area.innerHTML = currentRole==='admin'
+      ? '<div class="banner draft">📤 <span>工程師已送出回報('+state.sentTime+'),請進行覆核。</span></div>'
+      : '<div class="banner draft">📤 <span>回報已送出('+state.sentTime+'),等待管理者覆核。</span></div>';
+  } else if(state.status==='approved'){
+    area.innerHTML = '<div class="banner sent">✅ <span>已覆核完成('+state.approvedTime+')，已送出驗收。</span></div>';
+  } else {
+    area.innerHTML = '';
+  }
+  renderDetailActions();
+}
+
+function goReport(){
+  if(state.status==='sent'){ renderDone(); showScreen('screen-done'); return; }
+  $('f-arrive').value = state.arrive;
+  $('f-leave').value  = state.leave;
+  $('f-note').value   = state.note;
+  $('report-draft-banner').style.display = state.status==='draft' ? 'flex' : 'none';
+  renderPhotoSummary();
+  renderEquips();
+  dirty = false;
+  showScreen('screen-report');
+}
+
+function renderPhotoSummary(){
+  const el = $('photo-summary');
+  if(!photoTotal()){ el.innerHTML='<span class="readonly-note">尚未上傳照片(施工前、施工後、驗收單、其他)</span>'; return; }
+  el.innerHTML = CATS.map(c=>'<span class="chip">'+c+' <b>'+state.photos[c].length+'</b></span>').join('')+
+    '<span class="chip">合計 <b>'+photoTotal()+'</b> 張</span>';
+}
+
+function goPhotos(){ collectForm(); renderPhotoCats(); showScreen('screen-photos'); }
+function backFromPhotos(done){
+  renderPhotoSummary();
+  showScreen('screen-report');
+  if(done===true && photoTotal()>0) showToast('照片已儲存');
+}
+
+function renderPhotoCats(){
+  $('cnt-new').textContent   = photoNew();
+  $('cnt-total').textContent = photoTotal();
+  const wrap = $('photo-cats');
+  wrap.innerHTML = '';
+  CATS.forEach(cat => {
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.style.marginBottom = '14px';
+    let inner = '<div class="section-title">'+cat+' <span class="badge count">'+state.photos[cat].length+'</span></div>'+
+      '<div class="dropzone" onclick="pickPhotos(\''+cat+'\')">點擊上傳圖片<br>支援多張圖片上傳</div>';
+    if(state.photos[cat].length){
+      inner += '<div class="cat-photos">'+state.photos[cat].map((p,i) =>
+        '<div class="cat-photo">'+
+          '<div class="thumb"><img src="'+p.src+'" alt="'+cat+(i+1)+'">'+
+          '<button class="del-ph" onclick="delPhoto(\''+cat+'\','+i+')">✕</button></div>'+
+          '<div class="meta"><input type="text" placeholder="備註" value="'+(p.note||'').replace(/"/g,'&quot;')+'" oninput="updPhotoNote(\''+cat+'\','+i+',this.value)">'+
+          (p.isNew?'<span class="readonly-note">新增(未儲存)</span>':'')+'</div>'+
+        '</div>'
+      ).join('')+'</div>';
+    }
+    card.innerHTML = inner;
+    wrap.appendChild(card);
+  });
+}
+
+function pickPhotos(cat){ activeCat=cat; $('photo-input').click(); }
+
+$('photo-input').addEventListener('change', function(){
+  const files = Array.from(this.files||[]);
+  let pending = files.length;
+  files.forEach(f => {
+    const r = new FileReader();
+    r.onload = e => { state.photos[activeCat].push({src:e.target.result,note:'',isNew:true}); if(!--pending) renderPhotoCats(); };
+    r.readAsDataURL(f);
+  });
+  this.value=''; dirty=true;
+});
+
+function delPhoto(cat,i){ state.photos[cat].splice(i,1); dirty=true; renderPhotoCats(); }
+function updPhotoNote(cat,i,val){ state.photos[cat][i].note=val; dirty=true; }
+
+function addEquip(){ state.equips.push({type:'OC',name:'',qty:1}); renderEquips(); dirty=true; }
+function delEquip(i){ state.equips.splice(i,1); renderEquips(); dirty=true; }
+function updEquip(i,key,val){ state.equips[i][key]=val; dirty=true; }
+
+function renderEquips(){
+  const list=$('equip-list');
+  if(!state.equips.length){ list.innerHTML='<div class="readonly-note">尚未新增設備</div>'; return; }
+  list.innerHTML='';
+  state.equips.forEach((eq,i) => {
+    const d=document.createElement('div');
+    d.className='equip-item';
+    d.innerHTML='<button class="del-eq" onclick="delEquip('+i+')">刪除</button>'+
+      '<div class="equip-row"><select onchange="updEquip('+i+',\'type\',this.value)">'+
+        ['OC','MB','W-I','其他'].map(t=>'<option '+(eq.type===t?'selected':'')+'>'+t+'</option>').join('')+
+      '</select><input class="qty" type="number" min="1" value="'+eq.qty+'" oninput="updEquip('+i+',\'qty\',this.value)"></div>'+
+      '<div class="equip-row"><input type="text" placeholder="設備名稱 / 序號" value="'+(eq.name||'').replace(/"/g,'&quot;')+'" oninput="updEquip('+i+',\'name\',this.value)"></div>';
+    list.appendChild(d);
+  });
+}
+
+function collectForm(){ state.arrive=$('f-arrive').value; state.leave=$('f-leave').value; state.note=$('f-note').value; }
+
+function nowStr(){
+  const d=new Date(), p=n=>String(n).padStart(2,'0');
+  return d.getFullYear()+'/'+p(d.getMonth()+1)+'/'+p(d.getDate())+' '+p(d.getHours())+':'+p(d.getMinutes());
+}
+
+function saveDraft(){
+  collectForm(); state.status='draft'; state.draftTime=nowStr();
+  CATS.forEach(c=>state.photos[c].forEach(p=>p.isNew=false));
+  dirty=false;
+  $('report-draft-banner').style.display='flex';
+  renderPhotoSummary(); showToast('草稿已儲存 '+state.draftTime); renderDetailBanner();
+}
+
+function askSubmit(){
+  collectForm();
+  if(!state.arrive){ showToast('請填寫抵達時間'); return; }
+  if(!state.note.trim()){ showToast('送出前請填寫現場處理備註'); $('f-note').focus(); return; }
+  $('submit-summary').innerHTML='本次回報含照片 <b>'+photoTotal()+'</b> 張('+CATS.map(c=>c+' '+state.photos[c].length).join('、')+')、設備 <b>'+state.equips.length+'</b> 項。<br><br>送出後內容將<b>無法再修改</b>,並進入驗收流程。';
+  $('modal-submit').classList.add('show');
+}
+
+function closeModal(id){ $(id).classList.remove('show'); }
+
+function confirmSubmit(){
+  closeModal('modal-submit'); state.status='sent'; state.sentTime=nowStr();
+  CATS.forEach(c=>state.photos[c].forEach(p=>p.isNew=false));
+  dirty=false; showToast('回報已送出'); renderDetailBanner(); renderDone(); showScreen('screen-done');
+}
+
+function esc(s){ return (s||'').replace(/</g,'&lt;'); }
+function fmt(v){ return v?v.replace('T',' '):'—'; }
+
+function renderDone(){
+  $('done-summary').innerHTML='<b>抵達時間：</b>'+fmt(state.arrive)+'<br><b>離店時間：</b>'+fmt(state.leave)+'<br><b>處理備註：</b>'+(state.note?esc(state.note).replace(/\n/g,'<br>'):'—')+'<br><b>送出時間：</b>'+(state.sentTime||'');
+  const wrap=$('done-photo-cards'); wrap.innerHTML='';
+  CATS.forEach(cat => {
+    if(!state.photos[cat].length) return;
+    const card=document.createElement('div'); card.className='card';
+    card.innerHTML='<div class="section-title">'+cat+' <span class="badge count">'+state.photos[cat].length+'</span></div>'+
+      '<div class="done-photo-grid">'+state.photos[cat].map(p=>'<div class="ph"><img src="'+p.src+'">'+(p.note?'<div class="cap">'+esc(p.note)+'</div>':'')+'</div>').join('')+'</div>';
+    wrap.appendChild(card);
+  });
+  if(!photoTotal()){ const c=document.createElement('div'); c.className='card'; c.innerHTML='<div class="section-title">派工照片</div><div class="readonly-note">未上傳照片</div>'; wrap.appendChild(c); }
+  $('done-equips').innerHTML=state.equips.length?state.equips.map(e=>'<b>'+esc(e.type)+'</b> × '+e.qty+(e.name?' — '+esc(e.name):'')).join('<br>'):'<span class="readonly-note">無</span>';
+}
+
+function backToDetail(checkDirty){
+  if($('screen-report').classList.contains('active')) collectForm();
+  if(checkDirty && dirty){ $('modal-unsaved').classList.add('show'); return; }
+  renderDetailBanner(); showScreen('screen-detail');
+}
+function discardAndBack(){ dirty=false; $('modal-unsaved').classList.remove('show'); renderDetailBanner(); showScreen('screen-detail'); }
+function saveDraftAndBack(){ saveDraft(); $('modal-unsaved').classList.remove('show'); renderDetailBanner(); showScreen('screen-detail'); }
+
+['f-arrive','f-leave','f-note'].forEach(id => {
+  document.addEventListener('input', e => { if(e.target.id===id) dirty=true; });
+});
+
+/* ── Schedule page ── */
+const WEEKDAYS = ['日','一','二','三','四','五','六'];
+let scheduleEngineer = 'all';
+let scheduleMonth = new Date(); // current view month
+
+function shiftMonth(dir){
+  scheduleMonth = new Date(scheduleMonth.getFullYear(), scheduleMonth.getMonth() + dir, 1);
+  renderSchedule();
+}
+
+function setScheduleEngineer(eng){
+  scheduleEngineer = eng;
+  renderSchedule();
+}
+
+function getWeekLabel(d){
+  const start = new Date(d);
+  start.setDate(d.getDate() - d.getDay() + 1); // Monday
+  const end = new Date(start); end.setDate(start.getDate() + 6);
+  const fmt = x => (x.getMonth()+1)+'月'+x.getDate()+'日';
+  return fmt(start) + ' - ' + fmt(end);
+}
+
+function isSameMonth(dateStr, ref){
+  const d = new Date(dateStr);
+  return d.getFullYear() === ref.getFullYear() && d.getMonth() === ref.getMonth();
+}
+
+function isToday(dateStr){
+  const today = new Date();
+  const d = new Date(dateStr);
+  return d.getFullYear()===today.getFullYear() && d.getMonth()===today.getMonth() && d.getDate()===today.getDate();
+}
+
+function renderSchedule(){
+  /* month label */
+  $('sch-month-label').textContent = scheduleMonth.getFullYear()+'年 '+(scheduleMonth.getMonth()+1)+'月';
+
+  /* engineer chips (admin only) */
+  const wrap = $('schedule-eng-wrap');
+  if(currentRole === 'admin'){
+    const engs = [...new Set(ORDERS.map(o => o.engineer).filter(Boolean))].sort();
+    wrap.style.display = '';
+    wrap.innerHTML = ['all', ...engs].map(e =>
+      '<button class="filter-pill'+(scheduleEngineer===e?' active':'')+'" onclick="setScheduleEngineer(\''+e+'\')">'+
+        (e==='all' ? '👤 全部' : e)+'</button>'
+    ).join('');
+  } else {
+    wrap.style.display = 'none';
+  }
+
+  /* filter orders */
+  let orders = ORDERS.filter(o => isSameMonth(o.specDate, scheduleMonth));
+  if(currentRole === 'engineer'){
+    orders = orders.filter(o => o.engineer === 'E'); // 原型用 E 代表當前工程師
+  } else if(scheduleEngineer !== 'all'){
+    orders = orders.filter(o => o.engineer === scheduleEngineer);
+  }
+  orders.sort((a,b) => a.specDate.localeCompare(b.specDate));
+
+  const list = $('schedule-list');
+  if(!orders.length){
+    list.innerHTML = '<div class="schedule-empty"><div style="font-size:40px;margin-bottom:10px;">📅</div><p>本月沒有排程工單</p></div>';
+    return;
+  }
+
+  /* group by date */
+  const groups = {};
+  orders.forEach(o => { if(!groups[o.specDate]) groups[o.specDate]=[]; groups[o.specDate].push(o); });
+
+  let html = '', lastWeekLabel = '';
+  Object.keys(groups).sort().forEach(dateStr => {
+    const d = new Date(dateStr);
+    const wl = getWeekLabel(d);
+    if(wl !== lastWeekLabel){
+      html += '<div class="schedule-week-hdr">'+wl+'</div>';
+      lastWeekLabel = wl;
+    }
+    const todayCls = isToday(dateStr) ? ' today' : '';
+    html += '<div class="schedule-day">'+
+      '<div class="sch-date-col">'+
+        '<div class="sch-weekday">週'+WEEKDAYS[d.getDay()]+'</div>'+
+        '<div class="sch-daynum'+todayCls+'">'+d.getDate()+'</div>'+
+      '</div>'+
+      '<div class="sch-events">'+
+        groups[dateStr].map(o =>
+          '<div class="sch-event" data-cat="'+o.cat+'" onclick="openOrder(\''+o.id+'\')">'+
+            '<div class="sch-event-store">'+o.store+'</div>'+
+            '<div class="sch-event-meta">工單 #'+o.id+(o.size&&o.size!=='-'?' · '+o.size:'')+'</div>'+
+            (currentRole==='admin' && scheduleEngineer==='all'
+              ? '<div class="sch-event-eng">'+o.team+' / '+o.engineer+'</div>' : '')+
+          '</div>'
+        ).join('')+
+      '</div>'+
+    '</div>';
+  });
+  list.innerHTML = html;
+}
+
+switchRoleTo(currentRole); // 初始化角色權限
+renderTeamFilters();
+render();
+</script>
+</body>
+</html>
