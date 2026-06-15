@@ -545,7 +545,7 @@ function render(){
     else                      badges = '<span class="status-badge pending">待處理</span>';
     return '<div class="order-card" data-cat="'+o.cat+'" onclick="openOrder(\''+o.id+'\')">'+
       '<div class="top-row"><div class="store">'+o.store+'</div><div class="cat-tag">'+o.catLabel+'</div></div>'+
-      '<div class="meta">工單 #'+o.id+(o.size&&o.size!=='-'?' ・ '+o.size:'')+'</div>'+
+      '<div class="meta">工單 #'+o.id+'</div>'+
       '<div class="info-grid">'+
         '<div class="info-item"><span class="lbl">工班</span><span class="val">'+o.team+'</span></div>'+
         '<div class="info-item"><span class="lbl">工程師</span><span class="val">'+o.engineer+'</span></div>'+
