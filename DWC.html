@@ -220,7 +220,7 @@ body{background:#cfd8e3;display:flex;justify-content:center;min-height:100vh;}
       <img class="avatar" src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop&crop=faces" alt="Emily 庭玲">
       <div class="header-info">
         <div class="name">Emily</div>
-        <div class="pending">待處理工單:<b>95</b> 件</div>
+        <div class="pending">待處理工單:<b id="pending-count">0</b> 件</div>
       </div>
       <div class="role-badge" id="role-badge" onclick="openRoleModal()">管理者</div>
     </div>
@@ -232,11 +232,11 @@ body{background:#cfd8e3;display:flex;justify-content:center;min-height:100vh;}
     </div>
   </div>
   <div class="cats" id="cat-chips">
-    <button class="cat-chip active" data-cat="all" onclick="setCat('all')">全部 <span class="cnt">95</span></button>
-    <button class="cat-chip" data-cat="dismantle" onclick="setCat('dismantle')"><span class="dot"></span>拆/裝/移 <span class="cnt">63</span></button>
-    <button class="cat-chip" data-cat="convert" onclick="setCat('convert')"><span class="dot"></span>轉換 <span class="cnt">14</span></button>
-    <button class="cat-chip" data-cat="repair" onclick="setCat('repair')"><span class="dot"></span>維修 <span class="cnt">16</span></button>
-    <button class="cat-chip" data-cat="other" onclick="setCat('other')"><span class="dot"></span>其他 <span class="cnt">2</span></button>
+    <button class="cat-chip active" data-cat="all" onclick="setCat('all')">全部 <span class="cnt">0</span></button>
+    <button class="cat-chip" data-cat="dismantle" onclick="setCat('dismantle')"><span class="dot"></span>拆/裝/移 <span class="cnt">0</span></button>
+    <button class="cat-chip" data-cat="convert" onclick="setCat('convert')"><span class="dot"></span>轉換 <span class="cnt">0</span></button>
+    <button class="cat-chip" data-cat="repair" onclick="setCat('repair')"><span class="dot"></span>維修 <span class="cnt">0</span></button>
+    <button class="cat-chip" data-cat="other" onclick="setCat('other')"><span class="dot"></span>其他 <span class="cnt">0</span></button>
   </div>
   <div class="filters">
     <button class="filter-pill active" data-filter="all" onclick="setFilter('all')">全部工單</button>
@@ -549,6 +549,16 @@ function renderTeamFilters(){
   ).join('');
 }
 document.getElementById('search-input').addEventListener('input', render);
+
+function updateCounts(){
+  ['all','dismantle','convert','repair','other'].forEach(cat => {
+    const n = cat === 'all' ? ORDERS.length : ORDERS.filter(o => o.cat === cat).length;
+    const el = document.querySelector('.cat-chip[data-cat="'+cat+'"] .cnt');
+    if(el) el.textContent = n;
+  });
+  const pendingEl = $('pending-count');
+  if(pendingEl) pendingEl.textContent = ORDERS.length;
+}
 
 function render(){
   const q = document.getElementById('search-input').value.trim();
@@ -1057,7 +1067,8 @@ function renderSchedule(){
   list.innerHTML = html;
 }
 
-switchRoleTo(currentRole); // 初始化角色權限
+switchRoleTo(currentRole);
+updateCounts();
 renderTeamFilters();
 render();
 </script>
