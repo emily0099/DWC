@@ -317,7 +317,7 @@ body{background:#cfd8e3;display:flex;justify-content:center;min-height:100vh;}
         <div class="row"><div class="label">螢幕位置</div><div class="value" id="d-screen-pos"></div></div>
         <div class="row"><div class="label">任務內容</div><div class="value" id="d-task-content"></div></div>
         <div class="row"><div class="label">派工日期</div><div class="value" id="d-dispatch-date"></div></div>
-        <div class="row"><div class="label">指定日期</div><div class="value" id="d-spec-date"></div></div>
+        <div class="row"><div class="label">施作時間</div><div class="value" id="d-spec-date"></div></div>
         <div class="row">
           <div class="label">預計入店</div>
           <div class="value">
@@ -550,7 +550,7 @@ function render(){
         '<div class="info-item"><span class="lbl">工班</span><span class="val">'+o.team+'</span></div>'+
         '<div class="info-item"><span class="lbl">工程師</span><span class="val">'+o.engineer+'</span></div>'+
         '<div class="info-item"><span class="lbl">派工日期</span><span class="val">'+o.dispatchDate+'</span></div>'+
-        '<div class="info-item"><span class="lbl">指定日期</span><span class="val'+(o.urgent?' urgent':'')+'">'+o.specDate+'</span></div>'+
+        '<div class="info-item"><span class="lbl">施作時間</span><span class="val'+(o.urgent?' urgent':'')+'">'+o.specDate+'</span></div>'+
         '<div class="info-item full"><span class="lbl">地址</span><span class="val">'+o.address+'</span></div>'+
       '</div>'+
       '<div class="status-row">'+badges+'</div>'+
