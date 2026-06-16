@@ -609,10 +609,11 @@ function render(){
     if(q && !(o.store.includes(q) || o.id.includes(q) || o.address.includes(q))) return false;
     return true;
   });
+  items.sort((a,b) => (a.dispatchDate||'').localeCompare(b.dispatchDate||''));
   let countText;
   if(q) countText = '搜尋「'+q+'」，共 '+items.length+' 筆';
   else if(curDateFilter) countText = '📅 '+curDateFilter+'，共 '+items.length+' 筆';
-  else countText = '共 '+items.length+' 筆'+(curFilter==='all'&&curCat==='all'?'，顯示最近 / 最緊急的工單':'');
+  else countText = '共 '+items.length+' 筆'+(curFilter==='all'&&curCat==='all'?'，依派工日期排序':'');
   document.getElementById('result-count').textContent = countText;
   const list = document.getElementById('order-list');
   if(!items.length){
