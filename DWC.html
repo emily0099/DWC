@@ -261,7 +261,7 @@ body{background:#cfd8e3;display:flex;justify-content:center;min-height:100vh;}
     <div class="nav-item active" onclick="goPage('home')"><span class="icon">🏠</span>首頁</div>
     <div class="nav-item nav-groups-item" onclick="goPage('groups')"><span class="icon">👥</span>工班列表</div>
     <div class="nav-item" onclick="alert('掃描(原型未實作)')"><span class="icon">🔔</span>案件通知</div>
-    <div class="nav-item" onclick="goPage('my')"><span class="icon">📅</span>排程</div>
+    <div class="nav-item" onclick="goPage('my')"><span class="icon">📅</span>入店排程</div>
   </div>
 </div>
 
@@ -277,7 +277,7 @@ body{background:#cfd8e3;display:flex;justify-content:center;min-height:100vh;}
     <div class="nav-item" onclick="goPage('home')"><span class="icon">🏠</span>首頁</div>
     <div class="nav-item active" onclick="goPage('groups')"><span class="icon">👥</span>工班列表</div>
     <div class="nav-item" onclick="alert('掃描(原型未實作)')"><span class="icon">🔔</span>案件通知</div>
-    <div class="nav-item" onclick="goPage('my')"><span class="icon">📅</span>排程</div>
+    <div class="nav-item" onclick="goPage('my')"><span class="icon">📅</span>入店排程</div>
   </div>
 </div>
 
@@ -294,7 +294,7 @@ body{background:#cfd8e3;display:flex;justify-content:center;min-height:100vh;}
     <div class="nav-item" onclick="goPage('home')"><span class="icon">🏠</span>首頁</div>
     <div class="nav-item nav-groups-item" onclick="goPage('groups')"><span class="icon">👥</span>工班列表</div>
     <div class="nav-item" onclick="alert('掃描(原型未實作)')"><span class="icon">🔔</span>案件通知</div>
-    <div class="nav-item active" onclick="goPage('my')"><span class="icon">📅</span>排程</div>
+    <div class="nav-item active" onclick="goPage('my')"><span class="icon">📅</span>入店排程</div>
   </div>
 </div>
 
@@ -1045,14 +1045,14 @@ function renderSchedule(){
     wrap.style.display = 'none';
   }
 
-  /* filter orders */
-  let orders = ORDERS.filter(o => isSameMonth(o.specDate, scheduleMonth));
+  /* filter orders by expectedDate */
+  let orders = ORDERS.filter(o => o.expectedDate && isSameMonth(o.expectedDate, scheduleMonth));
   if(currentRole === 'engineer'){
     orders = orders.filter(o => o.engineer === 'E'); // 原型用 E 代表當前工程師
   } else if(scheduleEngineer !== 'all'){
     orders = orders.filter(o => o.engineer === scheduleEngineer);
   }
-  orders.sort((a,b) => a.specDate.localeCompare(b.specDate));
+  orders.sort((a,b) => a.expectedDate.localeCompare(b.expectedDate));
 
   const list = $('schedule-list');
   if(!orders.length){
@@ -1062,7 +1062,7 @@ function renderSchedule(){
 
   /* group by date */
   const groups = {};
-  orders.forEach(o => { if(!groups[o.specDate]) groups[o.specDate]=[]; groups[o.specDate].push(o); });
+  orders.forEach(o => { if(!groups[o.expectedDate]) groups[o.expectedDate]=[]; groups[o.expectedDate].push(o); });
 
   let html = '', lastWeekLabel = '';
   Object.keys(groups).sort().forEach(dateStr => {
