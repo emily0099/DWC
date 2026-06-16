@@ -603,6 +603,7 @@ function render(){
   const q = document.getElementById('search-input').value.trim();
   let items = ORDERS.filter(o => {
     if(currentRole === 'engineer' && o.engineer !== currentEngineer) return false;
+    if(currentRole === 'foreman' && o.team !== currentForemanTeam) return false;
     if(curCat !== 'all' && o.cat !== curCat) return false;
     if(curTeam !== 'all' && o.team !== curTeam) return false;
     if(curFilter === 'today' && o.specDate !== new Date().toLocaleDateString('sv-SE')) return false;
@@ -688,7 +689,8 @@ function goPage(page){
 /* ── Role ── */
 let currentRole = 'admin'; // 'admin' | 'foreman' | 'engineer'
 let currentEngineer = '';  // 當前登入的工程師代號
-let currentForeman = '';   // 當前登入的工頭名稱
+let currentForeman = '';     // 當前登入的工頭名稱
+let currentForemanTeam = ''; // 工頭所屬工班
 
 function openRoleModal(){
   hideEngineerPicker();
@@ -720,6 +722,8 @@ function showForemanPicker(){
 }
 function switchForeman(name){
   currentForeman = name;
+  const g = GROUPS.find(g => g.foreman === name);
+  currentForemanTeam = g ? g.name : '';
   switchRoleTo('foreman', true);
 }
 function hideEngineerPicker(){
@@ -1129,7 +1133,8 @@ function renderSchedule(){
   /* engineer chips (admin only) */
   const wrap = $('schedule-eng-wrap');
   if(currentRole === 'admin' || currentRole === 'foreman'){
-    const engs = [...new Set(ORDERS.map(o => o.engineer).filter(Boolean))].sort();
+    const teamOrders = currentRole === 'foreman' ? ORDERS.filter(o => o.team === currentForemanTeam) : ORDERS;
+    const engs = [...new Set(teamOrders.map(o => o.engineer).filter(Boolean))].sort();
     wrap.style.display = '';
     wrap.innerHTML = ['all', ...engs].map(e =>
       '<button class="filter-pill'+(scheduleEngineer===e?' active':'')+'" onclick="setScheduleEngineer(\''+e+'\')">'+
@@ -1143,6 +1148,9 @@ function renderSchedule(){
   let orders = ORDERS.filter(o => o.expectedDate && isSameMonth(o.expectedDate, scheduleMonth));
   if(currentRole === 'engineer'){
     orders = orders.filter(o => o.engineer === currentEngineer);
+  } else if(currentRole === 'foreman'){
+    orders = orders.filter(o => o.team === currentForemanTeam);
+    if(scheduleEngineer !== 'all') orders = orders.filter(o => o.engineer === scheduleEngineer);
   } else if(scheduleEngineer !== 'all'){
     orders = orders.filter(o => o.engineer === scheduleEngineer);
   }
