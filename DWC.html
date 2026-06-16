@@ -29,6 +29,7 @@ body{background:#cfd8e3;display:flex;justify-content:center;min-height:100vh;}
 .role-badge{background:rgba(255,255,255,.2);border:1.5px solid rgba(255,255,255,.5);border-radius:99px;padding:5px 14px;font-size:12px;font-weight:700;cursor:pointer;color:#fff;white-space:nowrap;flex-shrink:0;}
 .role-badge:hover{background:rgba(255,255,255,.35);}
 .role-badge.is-engineer{background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.3);}
+.role-badge.is-foreman{background:rgba(124,58,237,.35);border-color:rgba(196,181,253,.6);}
 .date-input{border:1px solid var(--blue);border-radius:6px;padding:4px 8px;font-size:14px;color:var(--text);background:#fff;width:100%;max-width:170px;}
 .eng-option{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border:1px solid var(--line);border-radius:8px;margin-bottom:8px;cursor:pointer;font-size:14px;font-weight:600;}
 .eng-option:hover{background:#eff6ff;border-color:var(--blue);}
@@ -454,6 +455,7 @@ body{background:#cfd8e3;display:flex;justify-content:center;min-height:100vh;}
     <p id="role-modal-desc">選擇登入身份以切換對應權限（原型示範用）</p>
     <div id="role-modal-btns" class="modal-btns" style="flex-direction:column;gap:10px;">
       <button class="btn primary" onclick="switchRoleTo('admin',true)">管理者</button>
+      <button class="btn primary" style="background:#7c3aed;" onclick="switchRoleTo('foreman',true)">工頭</button>
       <button class="btn secondary" onclick="showEngineerPicker()">工程師</button>
     </div>
     <div id="role-eng-list" style="display:none;max-height:260px;overflow-y:auto;margin-bottom:14px;"></div>
@@ -714,10 +716,10 @@ function switchRoleTo(role, fromModal, eng){
   currentRole = role;
   if(eng) currentEngineer = eng;
   const badge = $('role-badge');
-  badge.textContent = role === 'admin' ? '管理者' : '工程師 '+currentEngineer;
-  badge.className = 'role-badge' + (role === 'engineer' ? ' is-engineer' : '');
+  badge.textContent = role === 'admin' ? '管理者' : role === 'foreman' ? '工頭' : '工程師 '+currentEngineer;
+  badge.className = 'role-badge' + (role === 'engineer' ? ' is-engineer' : role === 'foreman' ? ' is-foreman' : '');
   document.querySelectorAll('.nav-groups-item').forEach(el => {
-    el.style.display = role === 'admin' ? '' : 'none';
+    el.style.display = (role === 'admin' || role === 'foreman') ? '' : 'none';
   });
   if(fromModal) closeModal('modal-role');
   if(currentOrderId) renderDetailActions();
@@ -778,7 +780,7 @@ function renderDetailActions(){
 
   /* 門市資訊按鈕區 */
   const btnArea = $('detail-btn-area');
-  if(currentRole === 'admin'){
+  if(currentRole === 'admin' || currentRole === 'foreman'){
     const engBtn = o.engineer
       ? '<button class="btn warn small" onclick="openAssignModal(\'change\')">變更工程師</button>'
       : '<button class="btn ghost-blue small" onclick="openAssignModal(\'assign\')">指定工程師</button>';
@@ -820,7 +822,7 @@ function renderDetailActions(){
     continueBtn.textContent = '查看回報內容';
   } else if(state && state.status === 'rejected'){
     continueBtn.textContent = currentRole === 'engineer' ? '重新填寫回報' : '查看回報內容';
-  } else if(currentRole === 'admin' && !(state && state.status === 'draft')){
+  } else if((currentRole === 'admin' || currentRole === 'foreman') && !(state && state.status === 'draft')){
     continueBtn.textContent = '填寫 / 查看回報';
   } else {
     continueBtn.textContent = state && state.status === 'draft' ? '繼續處理(編輯草稿)' : '繼續處理';
@@ -905,7 +907,9 @@ function renderDetailBanner(){
   } else if(state.status==='sent'){
     area.innerHTML = currentRole==='admin'
       ? '<div class="banner sent">📤 <span>工程師已送出回報（'+state.sentTime+'），請進行覆核。</span></div>'
-      : '<div class="banner sent">📤 <span>回報已送出（'+state.sentTime+'），等待管理者覆核。</span></div>';
+      : currentRole==='foreman'
+        ? '<div class="banner sent">📤 <span>工程師已送出回報（'+state.sentTime+'），等待管理者覆核。</span></div>'
+        : '<div class="banner sent">📤 <span>回報已送出（'+state.sentTime+'），等待管理者覆核。</span></div>';
   } else if(state.status==='verified'){
     area.innerHTML = '<div class="banner verified">🔖 <span>覆核通過（'+state.approvedTime+'），狀態：<b>待驗收</b></span></div>';
   } else if(state.status==='rejected'){
@@ -1107,7 +1111,7 @@ function renderSchedule(){
 
   /* engineer chips (admin only) */
   const wrap = $('schedule-eng-wrap');
-  if(currentRole === 'admin'){
+  if(currentRole === 'admin' || currentRole === 'foreman'){
     const engs = [...new Set(ORDERS.map(o => o.engineer).filter(Boolean))].sort();
     wrap.style.display = '';
     wrap.innerHTML = ['all', ...engs].map(e =>
@@ -1156,7 +1160,7 @@ function renderSchedule(){
           '<div class="sch-event" data-cat="'+o.cat+'" onclick="openOrder(\''+o.id+'\')">'+
             '<div class="sch-event-store">'+o.store+'</div>'+
             '<div class="sch-event-meta">工單 #'+o.id+'</div>'+
-            (currentRole==='admin' && scheduleEngineer==='all'
+            ((currentRole==='admin'||currentRole==='foreman') && scheduleEngineer==='all'
               ? '<div class="sch-event-eng">'+o.team+' / '+o.engineer+'</div>' : '')+
           '</div>'
         ).join('')+
