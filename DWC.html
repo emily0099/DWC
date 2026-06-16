@@ -259,6 +259,7 @@ body{background:#cfd8e3;display:flex;justify-content:center;min-height:100vh;}
   </div>
   <div class="filters">
     <button class="filter-pill active" data-filter="all" onclick="setFilter('all')">全部工單</button>
+    <button class="filter-pill" data-filter="pending" onclick="setFilter('pending')">⏳ 待處理</button>
     <button class="filter-pill" data-filter="draft" onclick="setFilter('draft')">我的草稿</button>
     <button class="filter-pill" data-filter="sent" onclick="setFilter('sent')">📤 待覆核</button>
     <button class="filter-pill" data-filter="verified" onclick="setFilter('verified')">🔖 待驗收</button>
@@ -640,6 +641,7 @@ function render(){
     if(curCat !== 'all' && o.cat !== curCat) return false;
     if(curTeam !== 'all' && o.team !== curTeam) return false;
     if(curFilter === 'today' && o.specDate !== new Date().toLocaleDateString('sv-SE')) return false;
+    if(curFilter === 'pending' && getRuntimeStatus(o.id, o.status) !== 'new') return false;
     if(['draft','sent','verified','rejected','approved'].includes(curFilter) && getRuntimeStatus(o.id, o.status) !== curFilter) return false;
     if(curDateFilter && o.dispatchDate !== curDateFilter) return false;
     if(curSpecFilter === 'none' && o.specDate) return false;
