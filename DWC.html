@@ -265,7 +265,7 @@ body{background:#cfd8e3;display:flex;justify-content:center;min-height:100vh;}
   </div>
   <div class="filters" id="team-filters"></div>
   <div class="date-filter-row">
-    <span class="date-filter-label">📅 施作日期</span>
+    <span class="date-filter-label">📅 派工日期</span>
     <input type="date" class="date-filter-input" id="date-filter-input" onchange="setDateFilter(this.value)">
     <span class="date-filter-clear" id="date-filter-clear" onclick="clearDateFilter()">✕ 清除</span>
   </div>
@@ -608,7 +608,7 @@ function render(){
     if(curTeam !== 'all' && o.team !== curTeam) return false;
     if(curFilter === 'today' && o.specDate !== new Date().toLocaleDateString('sv-SE')) return false;
     if(['draft','sent','verified','rejected','approved'].includes(curFilter) && getRuntimeStatus(o.id, o.status) !== curFilter) return false;
-    if(curDateFilter && o.specDate !== curDateFilter && o.dispatchDate !== curDateFilter) return false;
+    if(curDateFilter && o.dispatchDate !== curDateFilter) return false;
     if(q && !(o.store.includes(q) || o.id.includes(q) || o.address.includes(q))) return false;
     return true;
   });
