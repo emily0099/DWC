@@ -79,6 +79,8 @@ body{background:#cfd8e3;display:flex;justify-content:center;min-height:100vh;}
 .date-filter-input:focus{border-color:var(--blue);}
 .date-filter-clear{font-size:12px;color:#fff;background:var(--blue);border-radius:99px;padding:4px 10px;cursor:pointer;white-space:nowrap;display:none;flex-shrink:0;}
 .date-filter-clear.show{display:block;}
+.spec-none-btn{font-size:12px;font-weight:600;border:1px solid var(--line);border-radius:99px;padding:5px 12px;background:#fff;color:var(--text);cursor:pointer;white-space:nowrap;flex-shrink:0;}
+.spec-none-btn.active{background:#fef3c7;border-color:#d97706;color:#92400e;}
 .result-count{font-size:13px;color:var(--muted);padding:10px 14px 0;}
 
 /* ── Order list & cards ── */
@@ -268,6 +270,12 @@ body{background:#cfd8e3;display:flex;justify-content:center;min-height:100vh;}
     <span class="date-filter-label">📅 派工日期</span>
     <input type="date" class="date-filter-input" id="date-filter-input" onchange="setDateFilter(this.value)">
     <span class="date-filter-clear" id="date-filter-clear" onclick="clearDateFilter()">✕ 清除</span>
+  </div>
+  <div class="date-filter-row">
+    <span class="date-filter-label">🕐 施作時間</span>
+    <button class="spec-none-btn" id="spec-none-btn" onclick="toggleSpecNone()">未安排</button>
+    <input type="date" class="date-filter-input" id="spec-date-input" onchange="setSpecDateFilter(this.value)">
+    <span class="date-filter-clear" id="spec-date-clear" onclick="clearSpecDateFilter()">✕ 清除</span>
   </div>
   <div class="result-count" id="result-count"></div>
   <div class="list" id="order-list"></div>
@@ -551,7 +559,7 @@ const GROUPS = [
 const CATS = ['施工前','施工後','驗收單','其他'];
 
 /* ── Home page state ── */
-let curCat = 'all', curFilter = 'all', curTeam = 'all', curDateFilter = '';
+let curCat = 'all', curFilter = 'all', curTeam = 'all', curDateFilter = '', curSpecFilter = ''; // curSpecFilter: ''|'none'|'YYYY-MM-DD'
 
 function setCat(cat){
   curCat = cat;
@@ -577,6 +585,30 @@ function clearDateFilter(){
   curDateFilter = '';
   $('date-filter-input').value = '';
   $('date-filter-clear').classList.remove('show');
+  render();
+}
+function toggleSpecNone(){
+  if(curSpecFilter === 'none'){
+    curSpecFilter = '';
+    $('spec-none-btn').classList.remove('active');
+  } else {
+    curSpecFilter = 'none';
+    $('spec-none-btn').classList.add('active');
+    $('spec-date-input').value = '';
+    $('spec-date-clear').classList.remove('show');
+  }
+  render();
+}
+function setSpecDateFilter(val){
+  curSpecFilter = val;
+  $('spec-none-btn').classList.remove('active');
+  $('spec-date-clear').classList.toggle('show', !!val);
+  render();
+}
+function clearSpecDateFilter(){
+  curSpecFilter = '';
+  $('spec-date-input').value = '';
+  $('spec-date-clear').classList.remove('show');
   render();
 }
 function renderTeamFilters(){
@@ -609,6 +641,8 @@ function render(){
     if(curFilter === 'today' && o.specDate !== new Date().toLocaleDateString('sv-SE')) return false;
     if(['draft','sent','verified','rejected','approved'].includes(curFilter) && getRuntimeStatus(o.id, o.status) !== curFilter) return false;
     if(curDateFilter && o.dispatchDate !== curDateFilter) return false;
+    if(curSpecFilter === 'none' && o.specDate) return false;
+    if(curSpecFilter && curSpecFilter !== 'none' && o.specDate !== curSpecFilter) return false;
     if(q && !(o.store.includes(q) || o.id.includes(q) || o.address.includes(q))) return false;
     return true;
   });
