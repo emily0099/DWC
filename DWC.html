@@ -612,7 +612,8 @@ function clearSpecDateFilter(){
   render();
 }
 function renderTeamFilters(){
-  const teams = ['all', ...new Set(ORDERS.map(o => o.team))];
+  const groupOrder = GROUPS.map(g => g.name);
+  const teams = ['all', ...groupOrder.filter(t => ORDERS.some(o => o.team === t))];
   document.getElementById('team-filters').innerHTML = teams.map(t =>
     '<button class="filter-pill team-pill'+(t==='all'?' active':'')+'" data-team="'+t+'" onclick="setTeam(\''+t+'\')">'+
       (t==='all' ? '👥 全部工班' : t)+
