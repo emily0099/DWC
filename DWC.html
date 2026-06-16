@@ -101,7 +101,10 @@ body{background:#cfd8e3;display:flex;justify-content:center;min-height:100vh;}
 .status-badge.pending{background:#fef3c7;color:#92400e;}
 .status-badge.draft{background:#fffbeb;color:#92400e;border:1px solid #fde68a;}
 .status-badge.today{background:#fee2e2;color:#991b1b;}
-.status-badge.sent{background:#dcfce7;color:#166534;}
+.status-badge.sent{background:#dbeafe;color:#1e40af;}
+.status-badge.verified{background:#dcfce7;color:#166534;}
+.status-badge.rejected{background:#fee2e2;color:#991b1b;}
+.status-badge.approved{background:#d1fae5;color:#065f46;}
 
 /* ── Empty ── */
 .empty{text-align:center;padding:50px 20px;color:var(--muted);}
@@ -198,7 +201,10 @@ body{background:#cfd8e3;display:flex;justify-content:center;min-height:100vh;}
 .actions{display:flex;flex-direction:column;gap:10px;padding-bottom:24px;}
 .banner{border-radius:var(--rsm);padding:12px 14px;font-size:14px;display:flex;gap:8px;align-items:flex-start;line-height:1.5;}
 .banner.draft{background:#fffbeb;border:1px solid #fde68a;color:#92400e;}
-.banner.sent{background:#f0fdf4;border:1px solid #bbf7d0;color:#166534;}
+.banner.sent{background:#eff6ff;border:1px solid #bfdbfe;color:#1e40af;}
+.banner.verified{background:#f0fdf4;border:1px solid #bbf7d0;color:#166534;}
+.banner.rejected{background:#fff1f2;border:1px solid #fecdd3;color:#9f1239;}
+.banner.approved{background:#d1fae5;border:1px solid #6ee7b7;color:#065f46;}
 .modal-mask{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;z-index:50;padding:24px;}
 .modal-mask.show{display:flex;}
 .modal{background:#fff;border-radius:14px;padding:22px;width:100%;max-width:340px;}
@@ -610,11 +616,13 @@ function render(){
     const rs = getRuntimeStatus(o.id, o.status);
     let badges = '';
     const todayStr = new Date().toLocaleDateString('sv-SE');
-    if(rs === 'approved') badges = '<span class="status-badge sent">✅ 已驗收</span>';
-    else if(rs === 'sent')    badges = '<span class="status-badge sent">📤 待覆核</span>';
-    else if(rs === 'draft')   badges = '<span class="status-badge draft">📝 草稿未送出</span>';
+    if(rs === 'approved')  badges = '<span class="status-badge approved">✅ 已驗收</span>';
+    else if(rs === 'verified')  badges = '<span class="status-badge verified">🔖 待驗收</span>';
+    else if(rs === 'rejected')  badges = '<span class="status-badge rejected">❌ 覆核未過</span>';
+    else if(rs === 'sent')      badges = '<span class="status-badge sent">📤 待覆核</span>';
+    else if(rs === 'draft')     badges = '<span class="status-badge draft">📝 草稿未送出</span>';
     else if(o.specDate === todayStr) badges = '<span class="status-badge today">今日施作</span>';
-    else                      badges = '<span class="status-badge pending">待處理</span>';
+    else                        badges = '<span class="status-badge pending">待處理</span>';
     return '<div class="order-card" data-cat="'+o.cat+'" onclick="openOrder(\''+o.id+'\')">'+
       '<div class="top-row"><div class="store">'+o.store+'</div><div class="cat-tag">'+o.catLabel+'</div></div>'+
       '<div class="meta">工單 #'+o.id+'</div>'+
@@ -635,7 +643,7 @@ function getRuntimeStatus(id, defaultStatus){
   if(rs && rs.status !== 'new') return rs.status;
   return defaultStatus;
 }
-const STATUS_LABEL = {today:'今日施作', draft:'草稿未送出', pending:'待處理', sent:'待覆核', approved:'已驗收'};
+const STATUS_LABEL = {today:'今日施作', draft:'草稿未送出', pending:'待處理', sent:'待覆核', verified:'待驗收', rejected:'覆核未過', approved:'已驗收'};
 
 /* ── Groups page ── */
 function renderGroups(){
@@ -778,17 +786,27 @@ function renderDetailActions(){
   /* 管理者覆核區 */
   const adminArea = $('admin-action-area');
   if(currentRole === 'admin' && state && state.status === 'sent'){
-    adminArea.innerHTML = '<button class="btn primary" style="background:#16a34a;" onclick="adminApprove()">✅ 覆核完成，送出驗收</button>';
+    adminArea.innerHTML =
+      '<div style="display:flex;gap:10px;flex-wrap:wrap;">'+
+        '<button class="btn primary" style="background:#16a34a;flex:1;" onclick="adminApprove()">✅ 覆核通過</button>'+
+        '<button class="btn primary" style="background:#dc2626;flex:1;" onclick="adminReject()">❌ 覆核未過</button>'+
+      '</div>';
+  } else if(state && state.status === 'verified'){
+    adminArea.innerHTML = '<div class="banner verified">🔖 <span>覆核通過（'+(state.approvedTime||'')+'），狀態：<b>待驗收</b></span></div>';
+  } else if(state && state.status === 'rejected'){
+    adminArea.innerHTML = '<div class="banner rejected">❌ <span>覆核未過（'+(state.approvedTime||'')+'），請工程師重新確認後再送出。</span></div>';
   } else if(state && state.status === 'approved'){
-    adminArea.innerHTML = '<div class="banner sent">✅ <span>已覆核完成('+(state.approvedTime||'')+')，已送出驗收。</span></div>';
+    adminArea.innerHTML = '<div class="banner approved">✅ <span>已驗收完成（'+(state.approvedTime||'')+'）</span></div>';
   } else {
     adminArea.innerHTML = '';
   }
 
   /* 主要操作按鈕 */
   const continueBtn = $('btn-continue');
-  if(state && (state.status === 'sent' || state.status === 'approved')){
+  if(state && ['sent','verified','approved'].includes(state.status)){
     continueBtn.textContent = '查看回報內容';
+  } else if(state && state.status === 'rejected'){
+    continueBtn.textContent = currentRole === 'engineer' ? '重新填寫回報' : '查看回報內容';
   } else if(currentRole === 'admin' && !(state && state.status === 'draft')){
     continueBtn.textContent = '填寫 / 查看回報';
   } else {
@@ -802,10 +820,18 @@ function saveExpectedDate(val){
 }
 
 function adminApprove(){
-  state.status = 'approved';
+  state.status = 'verified';
   state.approvedTime = nowStr();
-  showToast('已覆核，送出驗收');
+  showToast('覆核通過，狀態更新為待驗收');
   renderDetailBanner();
+  render();
+}
+function adminReject(){
+  state.status = 'rejected';
+  state.approvedTime = nowStr();
+  showToast('已標記覆核未過');
+  renderDetailBanner();
+  render();
 }
 
 function openAssignModal(mode){
@@ -865,10 +891,14 @@ function renderDetailBanner(){
     area.innerHTML = '<div class="banner draft">📝 <span>已儲存草稿('+state.draftTime+'),照片 '+photoTotal()+' 張。<br>尚未送出,點「繼續處理」可修改後送出。</span></div>';
   } else if(state.status==='sent'){
     area.innerHTML = currentRole==='admin'
-      ? '<div class="banner draft">📤 <span>工程師已送出回報('+state.sentTime+'),請進行覆核。</span></div>'
-      : '<div class="banner draft">📤 <span>回報已送出('+state.sentTime+'),等待管理者覆核。</span></div>';
+      ? '<div class="banner sent">📤 <span>工程師已送出回報（'+state.sentTime+'），請進行覆核。</span></div>'
+      : '<div class="banner sent">📤 <span>回報已送出（'+state.sentTime+'），等待管理者覆核。</span></div>';
+  } else if(state.status==='verified'){
+    area.innerHTML = '<div class="banner verified">🔖 <span>覆核通過（'+state.approvedTime+'），狀態：<b>待驗收</b></span></div>';
+  } else if(state.status==='rejected'){
+    area.innerHTML = '<div class="banner rejected">❌ <span>覆核未過（'+state.approvedTime+'）'+(currentRole==='engineer'?'，請修改後重新送出覆核。':'')+' </span></div>';
   } else if(state.status==='approved'){
-    area.innerHTML = '<div class="banner sent">✅ <span>已覆核完成('+state.approvedTime+')，已送出驗收。</span></div>';
+    area.innerHTML = '<div class="banner approved">✅ <span>已驗收完成（'+state.approvedTime+'）</span></div>';
   } else {
     area.innerHTML = '';
   }
@@ -876,7 +906,8 @@ function renderDetailBanner(){
 }
 
 function goReport(){
-  if(state.status==='sent'){ renderDone(); showScreen('screen-done'); return; }
+  if(['sent','verified','approved'].includes(state.status)){ renderDone(); showScreen('screen-done'); return; }
+  if(state.status==='rejected' && currentRole==='engineer'){ state.status='draft'; renderDetailBanner(); }
   $('f-arrive').value = state.arrive;
   $('f-leave').value  = state.leave;
   $('f-note').value   = state.note;
