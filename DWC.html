@@ -467,7 +467,7 @@ body{background:#cfd8e3;display:flex;justify-content:center;min-height:100vh;}
   <div class="screen" id="screen-done">
     <div class="page-header">
       <button class="back" onclick="backToDetail(false)">←</button>
-      <h1>回報派工狀況</h1>
+      <h1>回報派工狀況 <span id="done-header-store" style="font-size:12px;font-weight:700;background:#fef3c7;color:#92400e;border-radius:99px;padding:3px 10px;vertical-align:middle;"></span></h1>
     </div>
     <div class="content">
       <div class="banner sent">✅ <span>回報已送出,等待驗收。內容已鎖定,如需修改請聯繫管理端。</span></div>
@@ -1263,6 +1263,8 @@ function esc(s){ return (s||'').replace(/</g,'&lt;'); }
 function fmt(v){ return v?v.replace('T',' '):'—'; }
 
 function renderDone(){
+  const _do = ORDERS.find(x => x.id === currentOrderId);
+  $('done-header-store').textContent = _do ? _do.store : '';
   $('done-summary').innerHTML='<b>抵達時間：</b>'+fmt(state.arrive)+'<br><b>離店時間：</b>'+fmt(state.leave)+'<br><b>處理備註：</b>'+(state.note?esc(state.note).replace(/\n/g,'<br>'):'—')+'<br><b>送出時間：</b>'+(state.sentTime||'');
   const wrap=$('done-photo-cards'); wrap.innerHTML='';
   CATS.forEach(cat => {
