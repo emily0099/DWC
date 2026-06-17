@@ -449,7 +449,7 @@ body{background:#cfd8e3;display:flex;justify-content:center;min-height:100vh;}
   <div class="screen" id="screen-photos">
     <div class="page-header">
       <button class="back" onclick="backFromPhotos()">←</button>
-      <h1>派工照片上傳</h1>
+      <h1>派工照片上傳 <span id="photos-header-store" style="font-size:12px;font-weight:700;background:#fef3c7;color:#92400e;border-radius:99px;padding:3px 10px;vertical-align:middle;"></span></h1>
     </div>
     <div class="content">
       <div class="photo-counts">
@@ -1044,7 +1044,12 @@ function renderPhotoSummary(){
     '<span class="chip">合計 <b>'+photoTotal()+'</b> 張</span>';
 }
 
-function goPhotos(){ collectForm(); renderPhotoCats(); showScreen('screen-photos'); }
+function goPhotos(){
+  collectForm();
+  const _po = ORDERS.find(x => x.id === currentOrderId);
+  $('photos-header-store').textContent = _po ? _po.store : '';
+  renderPhotoCats(); showScreen('screen-photos');
+}
 function backFromPhotos(done){
   renderPhotoSummary();
   showScreen('screen-report');
