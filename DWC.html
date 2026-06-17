@@ -1148,7 +1148,7 @@ function renderRemovedEquips(){
     html += '</div>';
 
     // 搜尋框
-    html += '<input class="equip-search" placeholder="搜尋品牌、型號、設備編號…" value="'+esc(removedEquipSearch)+'" oncompositionstart="_imeComposing=true" oncompositionend="_imeComposing=false;removedEquipSearch=this.value;renderRemovedEquips()" oninput="if(!_imeComposing){removedEquipSearch=this.value;renderRemovedEquips()}">';
+    html += '<input class="equip-search" placeholder="搜尋品牌、型號、設備編號…" value="'+esc(removedEquipSearch)+'" oncompositionstart="_imeComposing=true" oncompositionend="_imeComposing=false;removedEquipSearch=this.value;setTimeout(renderRemovedEquips,0)" oninput="if(!_imeComposing){removedEquipSearch=this.value;renderRemovedEquips()}">';
 
     // 套用篩選
     const q = removedEquipSearch.trim().toLowerCase();
@@ -1188,7 +1188,7 @@ function renderRemovedEquips(){
     html += '<div class="equip-no-db">此門市無設備清單資料</div>';
   }
 
-  const _searchFocused = document.activeElement && document.activeElement.classList.contains('equip-search');
+  const _searchFocused = !_imeComposing && document.activeElement && document.activeElement.classList.contains('equip-search');
   wrap.innerHTML = html;
   if(_searchFocused){
     const inp = wrap.querySelector('.equip-search');
