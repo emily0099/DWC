@@ -49,9 +49,9 @@ body{background:#cfd8e3;display:flex;justify-content:center;min-height:100vh;}
 
 /* ── Category chips ── */
 .cats{display:flex;gap:6px;padding:12px 14px 0;}
-.cat-chip{flex:1;display:flex;align-items:center;justify-content:center;gap:5px;padding:9px 8px;border-radius:99px;font-size:13px;font-weight:700;background:#fff;color:var(--text);border:1.5px solid var(--line);cursor:pointer;white-space:nowrap;transition:.15s;}
+.cat-chip{flex:1;min-width:0;display:flex;align-items:center;justify-content:center;gap:3px;padding:8px 4px;border-radius:99px;font-size:11px;font-weight:700;background:#fff;color:var(--text);border:1.5px solid var(--line);cursor:pointer;white-space:nowrap;transition:.15s;}
 .cat-chip .dot{width:8px;height:8px;border-radius:50%;}
-.cat-chip .cnt{font-size:12px;font-weight:700;background:#f1f5f9;color:var(--muted);border-radius:99px;padding:1px 7px;}
+.cat-chip .cnt{font-size:11px;font-weight:700;background:#f1f5f9;color:var(--muted);border-radius:99px;padding:1px 5px;}
 .cat-chip.active{border-color:transparent;}
 .cat-chip.active .cnt{background:rgba(255,255,255,.3);color:#fff;}
 .cat-chip[data-cat="all"].active{background:var(--text);color:#fff;}
