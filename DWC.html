@@ -1187,7 +1187,12 @@ function renderRemovedEquips(){
     html += '<div class="equip-no-db">此門市無設備清單資料</div>';
   }
 
+  const _searchFocused = document.activeElement && document.activeElement.classList.contains('equip-search');
   wrap.innerHTML = html;
+  if(_searchFocused){
+    const inp = wrap.querySelector('.equip-search');
+    if(inp){ inp.focus(); inp.setSelectionRange(inp.value.length, inp.value.length); }
+  }
 }
 
 function renderEquips(){
