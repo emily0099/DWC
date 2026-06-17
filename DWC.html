@@ -869,7 +869,9 @@ function populateOrderInfo(){
   if(!o) return;
   $('d-store').textContent         = o.store;
   $('d-store-no').textContent      = o.storeNo;
-  $('d-address').textContent       = o.address;
+  $('d-address').innerHTML          = o.address
+    ? '<a href="https://maps.google.com/maps?q='+encodeURIComponent(o.address)+'" target="_blank" style="color:var(--blue);text-decoration:underline;">'+o.address+'</a>'
+    : '—';
   $('d-phone').textContent         = o.phone;
   $('d-id').textContent            = o.id;
   $('d-cat-label').textContent     = o.catLabel;
