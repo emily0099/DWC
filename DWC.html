@@ -1089,6 +1089,7 @@ function updEquip(i,key,val){ state.equips[i][key]=val; dirty=true; }
 
 let removedEquipSearch = '';
 let removedEquipTypeFilter = 'all';
+let _imeComposing = false;
 
 function toggleRemovedEquip(id){
   const eq = EQUIP_DB.find(e => e.id === id);
@@ -1147,7 +1148,7 @@ function renderRemovedEquips(){
     html += '</div>';
 
     // 搜尋框
-    html += '<input class="equip-search" placeholder="搜尋品牌、型號、設備編號…" value="'+esc(removedEquipSearch)+'" oninput="removedEquipSearch=this.value;renderRemovedEquips()">';
+    html += '<input class="equip-search" placeholder="搜尋品牌、型號、設備編號…" value="'+esc(removedEquipSearch)+'" oncompositionstart="_imeComposing=true" oncompositionend="_imeComposing=false;removedEquipSearch=this.value;renderRemovedEquips()" oninput="if(!_imeComposing){removedEquipSearch=this.value;renderRemovedEquips()}">';
 
     // 套用篩選
     const q = removedEquipSearch.trim().toLowerCase();
