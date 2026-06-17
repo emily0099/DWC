@@ -48,7 +48,7 @@ body{background:#cfd8e3;display:flex;justify-content:center;min-height:100vh;}
 .search-box .scan-btn{background:var(--blue);color:#fff;border:none;border-radius:99px;width:44px;height:44px;font-size:18px;display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer;}
 
 /* ── Category chips ── */
-.cats{display:flex;gap:8px;padding:12px 14px 0;flex-wrap:wrap;}
+.cats{display:flex;gap:8px;padding:12px 14px 0;flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;}.cats::-webkit-scrollbar{display:none;}
 .cat-chip{flex-shrink:0;display:flex;align-items:center;gap:6px;padding:9px 16px;border-radius:99px;font-size:14px;font-weight:700;background:#fff;color:var(--text);border:1.5px solid var(--line);cursor:pointer;white-space:nowrap;transition:.15s;}
 .cat-chip .dot{width:8px;height:8px;border-radius:50%;}
 .cat-chip .cnt{font-size:12px;font-weight:700;background:#f1f5f9;color:var(--muted);border-radius:99px;padding:1px 7px;}
