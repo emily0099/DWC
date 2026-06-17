@@ -1241,7 +1241,7 @@ function askSubmit(){
   collectForm();
   if(!state.arrive){ showToast('請填寫抵達時間'); return; }
   if(!state.note.trim()){ showToast('送出前請填寫現場處理備註'); $('f-note').focus(); return; }
-  $('submit-summary').innerHTML='本次回報含照片 <b>'+photoTotal()+'</b> 張('+CATS.map(c=>c+' '+state.photos[c].length).join('、')+')、設備 <b>'+state.equips.length+'</b> 項'+(state.removedEquips.length?'、拆除設備 <b>'+state.removedEquips.length+'</b> 筆':'')+' 。<br><br>送出後內容將<b>無法再修改</b>,並進入驗收流程。';
+  $('submit-summary').innerHTML='本次回報含照片 <b>'+photoTotal()+'</b> 張('+CATS.map(c=>c+' '+state.photos[c].length).join('、')+')、設備 <b>'+state.equips.length+'</b> 項'+(state.removedEquips.length?'、拆除設備 <b>'+state.removedEquips.length+'</b> 筆':'')+' 。<br><br>送出後內容將<b>無法再修改</b>,並進入覆核流程。';
   $('modal-submit').classList.add('show');
 }
 
