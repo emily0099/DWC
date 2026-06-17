@@ -108,6 +108,7 @@ body{background:#cfd8e3;display:flex;justify-content:center;min-height:100vh;}
 .status-badge.pending{background:#fef3c7;color:#92400e;}
 .status-badge.draft{background:#fffbeb;color:#92400e;border:1px solid #fde68a;}
 .status-badge.today{background:#fee2e2;color:#991b1b;}
+.status-badge.scheduled{background:#d1fae5;color:#065f46;}
 .status-badge.sent{background:#dbeafe;color:#1e40af;}
 .status-badge.verified{background:#dcfce7;color:#166534;}
 .status-badge.rejected{background:#fee2e2;color:#991b1b;}
@@ -280,6 +281,7 @@ body{background:#cfd8e3;display:flex;justify-content:center;min-height:100vh;}
   <div class="filters">
     <button class="filter-pill active" data-filter="all" onclick="setFilter('all')">全部工單</button>
     <button class="filter-pill" data-filter="pending" onclick="setFilter('pending')">⏳ 待處理</button>
+    <button class="filter-pill" data-filter="scheduled" onclick="setFilter('scheduled')">📅 已安排</button>
     <button class="filter-pill" data-filter="draft" onclick="setFilter('draft')">我的草稿</button>
     <button class="filter-pill" data-filter="sent" onclick="setFilter('sent')">📤 待覆核</button>
     <button class="filter-pill" data-filter="verified" onclick="setFilter('verified')">🔖 待驗收</button>
@@ -681,7 +683,7 @@ function render(){
     if(curTeam !== 'all' && o.team !== curTeam) return false;
     if(curFilter === 'today' && o.specDate !== new Date().toLocaleDateString('sv-SE')) return false;
     if(curFilter === 'pending' && getRuntimeStatus(o.id, o.status) !== 'pending') return false;
-    if(['draft','sent','verified','rejected','approved'].includes(curFilter) && getRuntimeStatus(o.id, o.status) !== curFilter) return false;
+    if(['draft','scheduled','sent','verified','rejected','approved'].includes(curFilter) && getRuntimeStatus(o.id, o.status) !== curFilter) return false;
     if(curDateFilter && o.dispatchDate !== curDateFilter) return false;
     if(curSpecFilter === 'none' && o.specDate) return false;
     if(curSpecFilter && curSpecFilter !== 'none' && o.specDate !== curSpecFilter) return false;
@@ -713,6 +715,7 @@ function render(){
     else if(rs === 'rejected')  badges = '<span class="status-badge rejected">❌ 覆核未過</span>';
     else if(rs === 'sent')      badges = '<span class="status-badge sent">📤 待覆核</span>';
     else if(rs === 'draft')     badges = '<span class="status-badge draft">📝 草稿未送出</span>';
+    else if(rs === 'scheduled') badges = '<span class="status-badge scheduled">📅 已安排</span>';
     else if(o.specDate === todayStr) badges = '<span class="status-badge today">今日施作</span>';
     else                        badges = '<span class="status-badge pending">待處理</span>';
     return '<div class="order-card" data-cat="'+o.cat+'" onclick="openOrder(\''+o.id+'\')">'+
@@ -735,7 +738,7 @@ function getRuntimeStatus(id, defaultStatus){
   if(rs && rs.status !== 'new') return rs.status;
   return defaultStatus;
 }
-const STATUS_LABEL = {today:'今日施作', draft:'草稿未送出', pending:'待處理', sent:'待覆核', verified:'待驗收', rejected:'覆核未過', approved:'已驗收'};
+const STATUS_LABEL = {today:'今日施作', draft:'草稿未送出', pending:'待處理', scheduled:'已安排', sent:'待覆核', verified:'待驗收', rejected:'覆核未過', approved:'已驗收'};
 
 /* ── Groups page ── */
 function renderGroups(){
@@ -929,7 +932,19 @@ function renderDetailActions(){
 
 function saveExpectedDate(val){
   const o = ORDERS.find(x => x.id === currentOrderId);
-  if(o){ o.expectedDate = val; showToast('預計入店日期已儲存'); }
+  if(!o) return;
+  o.expectedDate = val;
+  const s = getOrderState(currentOrderId);
+  if(val && s.status === 'pending'){
+    s.status = 'scheduled';
+    showToast('預計入店日期已儲存，狀態更新為已安排');
+  } else if(!val && s.status === 'scheduled'){
+    s.status = 'pending';
+    showToast('預計入店日期已清除');
+  } else {
+    showToast('預計入店日期已儲存');
+  }
+  renderDetailBanner(); render();
 }
 
 function adminApprove(){
