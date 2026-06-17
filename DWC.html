@@ -394,7 +394,7 @@ body{background:#cfd8e3;display:flex;justify-content:center;min-height:100vh;}
   <div class="screen" id="screen-report">
     <div class="page-header">
       <button class="back" onclick="backToDetail(true)">←</button>
-      <h1>回報派工狀況</h1>
+      <h1><span id="report-header-store" style="font-size:14px;font-weight:600;opacity:.85;"></span> 回報派工狀況</h1>
     </div>
     <div class="content">
       <div class="banner draft" id="report-draft-banner" style="display:none;">
@@ -1023,6 +1023,7 @@ function goReport(){
   if(state.status==='rejected' && currentRole==='engineer'){ state.status='draft'; renderDetailBanner(); }
   const _ro = ORDERS.find(x => x.id === currentOrderId);
   $('report-store-name').textContent = _ro ? _ro.store : '';
+  $('report-header-store').textContent = _ro ? _ro.store : '';
   $('f-arrive').value = state.arrive;
   $('f-leave').value  = state.leave;
   $('f-note').value   = state.note;
