@@ -219,6 +219,10 @@ body{background:#cfd8e3;display:flex;justify-content:center;min-height:100vh;}
 .equip-db-item .eq-btn.add{background:#fee2e2;color:#dc2626;}
 .equip-db-item .eq-btn.remove{background:#dc2626;color:#fff;}
 .equip-no-db{font-size:13px;color:var(--muted);text-align:center;padding:12px 0;}
+.equip-type-filters{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;}
+.equip-type-pill{font-size:12px;font-weight:700;padding:5px 12px;border-radius:99px;border:1.5px solid var(--line);background:#fff;color:var(--text);cursor:pointer;}
+.equip-type-pill.active{background:var(--red);border-color:var(--red);color:#fff;}
+.equip-select-all{width:100%;margin-bottom:8px;padding:8px;border-radius:8px;border:1.5px dashed #fca5a5;background:#fff5f5;color:#dc2626;font-size:13px;font-weight:700;cursor:pointer;}
 .actions{display:flex;flex-direction:column;gap:10px;padding-bottom:24px;}
 .banner{border-radius:var(--rsm);padding:12px 14px;font-size:14px;display:flex;gap:8px;align-items:flex-start;line-height:1.5;}
 .banner.draft{background:#fffbeb;border:1px solid #fde68a;color:#92400e;}
@@ -1081,6 +1085,7 @@ function delEquip(i){ state.equips.splice(i,1); renderEquips(); dirty=true; }
 function updEquip(i,key,val){ state.equips[i][key]=val; dirty=true; }
 
 let removedEquipSearch = '';
+let removedEquipTypeFilter = 'all';
 
 function toggleRemovedEquip(id){
   const eq = EQUIP_DB.find(e => e.id === id);
@@ -1088,6 +1093,33 @@ function toggleRemovedEquip(id){
   const idx = state.removedEquips.findIndex(e => e.id === id);
   if(idx >= 0) state.removedEquips.splice(idx,1);
   else state.removedEquips.push({id:eq.id,type:eq.type,brand:eq.brand,model:eq.model,area:eq.area,status:eq.status});
+  dirty = true;
+  renderRemovedEquips();
+}
+
+function selectAllFiltered(){
+  const o = ORDERS.find(x => x.id === currentOrderId);
+  const storeNo = o ? o.storeNo : '';
+  const dbItems = EQUIP_DB.filter(e => e.storeNo === storeNo);
+  const q = removedEquipSearch.trim().toLowerCase();
+  let filtered = removedEquipTypeFilter !== 'all' ? dbItems.filter(e => e.type === removedEquipTypeFilter) : dbItems;
+  if(q) filtered = filtered.filter(e =>
+    e.type.toLowerCase().includes(q)||e.brand.toLowerCase().includes(q)||
+    e.model.toLowerCase().includes(q)||e.id.toLowerCase().includes(q)
+  );
+  const selectedIds = new Set(state.removedEquips.map(e => e.id));
+  const allSelected = filtered.every(e => selectedIds.has(e.id));
+  if(allSelected){
+    filtered.forEach(e => {
+      const idx = state.removedEquips.findIndex(r => r.id === e.id);
+      if(idx >= 0) state.removedEquips.splice(idx,1);
+    });
+  } else {
+    filtered.forEach(e => {
+      if(!selectedIds.has(e.id))
+        state.removedEquips.push({id:e.id,type:e.type,brand:e.brand,model:e.model,area:e.area,status:e.status});
+    });
+  }
   dirty = true;
   renderRemovedEquips();
 }
@@ -1102,12 +1134,32 @@ function renderRemovedEquips(){
   let html = '';
 
   if(dbItems.length){
-    html += '<input class="equip-search" id="equip-search-input" placeholder="搜尋設備類型、品牌、型號、設備編號…" value="'+esc(removedEquipSearch)+'" oninput="removedEquipSearch=this.value;renderRemovedEquips()">';
+    // 類型篩選 pills
+    const types = ['all', ...new Set(dbItems.map(e => e.type))];
+    html += '<div class="equip-type-filters">';
+    types.forEach(t => {
+      const cnt = t==='all' ? dbItems.length : dbItems.filter(e=>e.type===t).length;
+      html += '<button class="equip-type-pill'+(removedEquipTypeFilter===t?' active':'')+'" onclick="removedEquipTypeFilter=\''+t+'\';renderRemovedEquips()">'+(t==='all'?'全部':t)+' '+cnt+'</button>';
+    });
+    html += '</div>';
+
+    // 搜尋框
+    html += '<input class="equip-search" placeholder="搜尋品牌、型號、設備編號…" value="'+esc(removedEquipSearch)+'" oninput="removedEquipSearch=this.value;renderRemovedEquips()">';
+
+    // 套用篩選
     const q = removedEquipSearch.trim().toLowerCase();
-    const filtered = q ? dbItems.filter(e =>
+    let filtered = removedEquipTypeFilter !== 'all' ? dbItems.filter(e => e.type === removedEquipTypeFilter) : dbItems;
+    if(q) filtered = filtered.filter(e =>
       e.type.toLowerCase().includes(q)||e.brand.toLowerCase().includes(q)||
       e.model.toLowerCase().includes(q)||e.id.toLowerCase().includes(q)
-    ) : dbItems;
+    );
+
+    // 全選按鈕
+    if(filtered.length){
+      const allSel = filtered.every(e => selectedIds.has(e.id));
+      html += '<button class="equip-select-all" onclick="selectAllFiltered()">'+(allSel?'✓ 取消全選 ('+filtered.length+'項)':'全選目前顯示設備 ('+filtered.length+'項)')+'</button>';
+    }
+
     html += '<div class="equip-db-list">';
     if(!filtered.length){
       html += '<div class="equip-no-db">找不到符合的設備</div>';
