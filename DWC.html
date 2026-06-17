@@ -422,7 +422,12 @@ body{background:#cfd8e3;display:flex;justify-content:center;min-height:100vh;}
       <div class="card">
         <div class="section-title" style="color:var(--red);">🗑 拆除設備紀錄</div>
         <div class="removed-hint">記錄本次從門市拆除的設備</div>
-        <div id="removed-equip-list"></div>
+        <div id="removed-equip-type-filters" class="equip-type-filters" style="display:none;"></div>
+        <input class="equip-search" id="removed-equip-search" placeholder="搜尋品牌、型號、設備編號…" style="display:none;"
+          oncompositionstart="_imeComposing=true"
+          oncompositionend="_imeComposing=false;removedEquipSearch=this.value;renderRemovedEquipsList()"
+          oninput="if(!_imeComposing){removedEquipSearch=this.value;renderRemovedEquipsList()}">
+        <div id="removed-equip-results"></div>
       </div>
       <div class="card">
         <div class="field" style="margin-bottom:0;">
@@ -1098,19 +1103,26 @@ function toggleRemovedEquip(id){
   if(idx >= 0) state.removedEquips.splice(idx,1);
   else state.removedEquips.push({id:eq.id,type:eq.type,brand:eq.brand,model:eq.model,area:eq.area,status:eq.status});
   dirty = true;
-  renderRemovedEquips();
+  renderRemovedEquipsList();
 }
 
-function selectAllFiltered(){
+function _getStoreDbItems(){
   const o = ORDERS.find(x => x.id === currentOrderId);
-  const storeNo = o ? o.storeNo : '';
-  const dbItems = EQUIP_DB.filter(e => e.storeNo === storeNo);
+  return EQUIP_DB.filter(e => e.storeNo === (o ? o.storeNo : ''));
+}
+
+function _getFilteredItems(dbItems){
   const q = removedEquipSearch.trim().toLowerCase();
   let filtered = removedEquipTypeFilter !== 'all' ? dbItems.filter(e => e.type === removedEquipTypeFilter) : dbItems;
   if(q) filtered = filtered.filter(e =>
     e.type.toLowerCase().includes(q)||e.brand.toLowerCase().includes(q)||
     e.model.toLowerCase().includes(q)||e.id.toLowerCase().includes(q)
   );
+  return filtered;
+}
+
+function selectAllFiltered(){
+  const filtered = _getFilteredItems(_getStoreDbItems());
   const selectedIds = new Set(state.removedEquips.map(e => e.id));
   const allSelected = filtered.every(e => selectedIds.has(e.id));
   if(allSelected){
@@ -1125,75 +1137,66 @@ function selectAllFiltered(){
     });
   }
   dirty = true;
-  renderRemovedEquips();
+  renderRemovedEquipsList();
 }
 
 function renderRemovedEquips(){
-  const wrap = $('removed-equip-list');
-  const o = ORDERS.find(x => x.id === currentOrderId);
-  const storeNo = o ? o.storeNo : '';
-  const dbItems = EQUIP_DB.filter(e => e.storeNo === storeNo);
-  const selectedIds = new Set(state.removedEquips.map(e => e.id));
+  const dbItems = _getStoreDbItems();
+  const filtersEl = $('removed-equip-type-filters');
+  const searchEl  = $('removed-equip-search');
 
+  if(!dbItems.length){
+    filtersEl.style.display = 'none';
+    searchEl.style.display  = 'none';
+    $('removed-equip-results').innerHTML = '<div class="equip-no-db">此門市無設備清單資料</div>';
+    return;
+  }
+
+  // 類型篩選 pills（不含搜尋框，永遠不會銷毀 input）
+  filtersEl.style.display = '';
+  const types = ['all', ...new Set(dbItems.map(e => e.type))];
+  filtersEl.innerHTML = types.map(t => {
+    const cnt = t==='all' ? dbItems.length : dbItems.filter(e=>e.type===t).length;
+    return '<button class="equip-type-pill'+(removedEquipTypeFilter===t?' active':'')+
+      '" onclick="removedEquipTypeFilter=\''+t+'\';renderRemovedEquips()">'+(t==='all'?'全部':t)+' '+cnt+'</button>';
+  }).join('');
+
+  // 搜尋框直接顯示（靜態元素，不重建）
+  searchEl.style.display = '';
+
+  renderRemovedEquipsList();
+}
+
+// 只更新結果清單，不動搜尋框
+function renderRemovedEquipsList(){
+  const dbItems  = _getStoreDbItems();
+  const filtered = _getFilteredItems(dbItems);
+  const selectedIds = new Set(state.removedEquips.map(e => e.id));
   let html = '';
 
-  if(dbItems.length){
-    // 類型篩選 pills
-    const types = ['all', ...new Set(dbItems.map(e => e.type))];
-    html += '<div class="equip-type-filters">';
-    types.forEach(t => {
-      const cnt = t==='all' ? dbItems.length : dbItems.filter(e=>e.type===t).length;
-      html += '<button class="equip-type-pill'+(removedEquipTypeFilter===t?' active':'')+'" onclick="removedEquipTypeFilter=\''+t+'\';renderRemovedEquips()">'+(t==='all'?'全部':t)+' '+cnt+'</button>';
+  if(filtered.length){
+    const allSel = filtered.every(e => selectedIds.has(e.id));
+    html += '<button class="equip-select-all" onclick="selectAllFiltered()">'+(allSel?'✓ 取消全選 ('+filtered.length+'項)':'全選目前顯示設備 ('+filtered.length+'項)')+'</button>';
+    html += '<div class="equip-db-list">';
+    filtered.forEach(e => {
+      const sel = selectedIds.has(e.id);
+      html += '<div class="equip-db-item'+(sel?' selected':'')+'">'+
+        '<div class="eq-info">'+
+          '<div class="eq-type">'+esc(e.type)+(e.area?' · '+esc(e.area):'')+'</div>'+
+          '<div class="eq-main">'+esc(e.brand)+' '+esc(e.model)+'</div>'+
+          '<div class="eq-id">'+esc(e.id)+'</div>'+
+        '</div>'+
+        '<button class="eq-btn '+(sel?'remove':'add')+'" onclick="toggleRemovedEquip(\''+e.id.replace(/'/g,"\\'")+'\')">'+(sel?'✓ 已選':'＋ 拆除')+'</button>'+
+      '</div>';
     });
     html += '</div>';
-
-    // 搜尋框
-    html += '<input class="equip-search" placeholder="搜尋品牌、型號、設備編號…" value="'+esc(removedEquipSearch)+'" oncompositionstart="_imeComposing=true" oncompositionend="_imeComposing=false;removedEquipSearch=this.value;setTimeout(renderRemovedEquips,0)" oninput="if(!_imeComposing){removedEquipSearch=this.value;renderRemovedEquips()}">';
-
-    // 套用篩選
-    const q = removedEquipSearch.trim().toLowerCase();
-    let filtered = removedEquipTypeFilter !== 'all' ? dbItems.filter(e => e.type === removedEquipTypeFilter) : dbItems;
-    if(q) filtered = filtered.filter(e =>
-      e.type.toLowerCase().includes(q)||e.brand.toLowerCase().includes(q)||
-      e.model.toLowerCase().includes(q)||e.id.toLowerCase().includes(q)
-    );
-
-    // 全選按鈕
-    if(filtered.length){
-      const allSel = filtered.every(e => selectedIds.has(e.id));
-      html += '<button class="equip-select-all" onclick="selectAllFiltered()">'+(allSel?'✓ 取消全選 ('+filtered.length+'項)':'全選目前顯示設備 ('+filtered.length+'項)')+'</button>';
-    }
-
-    html += '<div class="equip-db-list">';
-    if(!filtered.length){
-      html += '<div class="equip-no-db">找不到符合的設備</div>';
-    } else {
-      filtered.forEach(e => {
-        const sel = selectedIds.has(e.id);
-        html += '<div class="equip-db-item'+(sel?' selected':'')+'">'+
-          '<div class="eq-info">'+
-            '<div class="eq-type">'+esc(e.type)+(e.area?' · '+esc(e.area):'')+'</div>'+
-            '<div class="eq-main">'+esc(e.brand)+' '+esc(e.model)+'</div>'+
-            '<div class="eq-id">'+esc(e.id)+'</div>'+
-          '</div>'+
-          '<button class="eq-btn '+(sel?'remove':'add')+'" onclick="toggleRemovedEquip(\''+e.id.replace(/'/g,"\\'")+'\')">'+(sel?'✓ 已選':'＋ 拆除')+'</button>'+
-        '</div>';
-      });
-    }
-    html += '</div>';
-    if(state.removedEquips.length){
-      html += '<div style="margin-top:10px;font-size:12px;font-weight:700;color:var(--red);">已選拆除 '+state.removedEquips.length+' 項</div>';
-    }
   } else {
-    html += '<div class="equip-no-db">此門市無設備清單資料</div>';
+    html += '<div class="equip-no-db">找不到符合的設備</div>';
   }
-
-  const _searchFocused = !_imeComposing && document.activeElement && document.activeElement.classList.contains('equip-search');
-  wrap.innerHTML = html;
-  if(_searchFocused){
-    const inp = wrap.querySelector('.equip-search');
-    if(inp){ inp.focus(); inp.setSelectionRange(inp.value.length, inp.value.length); }
+  if(state.removedEquips.length){
+    html += '<div style="margin-top:10px;font-size:12px;font-weight:700;color:var(--red);">已選拆除 '+state.removedEquips.length+' 項</div>';
   }
+  $('removed-equip-results').innerHTML = html;
 }
 
 function renderEquips(){
