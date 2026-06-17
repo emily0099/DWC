@@ -200,11 +200,13 @@ body{background:#cfd8e3;display:flex;justify-content:center;min-height:100vh;}
 .photo-summary .chip{font-size:13px;background:#f1f5f9;border:1px solid var(--line);border-radius:99px;padding:5px 12px;color:var(--text);}
 .photo-summary .chip b{color:var(--blue);}
 .equip-item{border:1px solid var(--line);border-radius:8px;padding:12px;margin-top:10px;position:relative;background:#fafbfc;}
+.equip-item.removed{border-color:#fca5a5;background:#fff5f5;}
 .equip-item .del-eq{position:absolute;top:8px;right:8px;background:none;border:none;color:var(--red);font-size:14px;cursor:pointer;font-weight:700;}
 .equip-item .equip-row{display:flex;gap:8px;margin-bottom:8px;}
 .equip-item .equip-row:last-child{margin-bottom:0;}
 .equip-item input,.equip-item select{flex:1;border:1px solid var(--line);border-radius:6px;padding:9px 10px;font-size:14px;background:#fff;}
 .equip-item input.qty{max-width:90px;}
+.removed-hint{font-size:12px;color:var(--muted);margin-top:2px;margin-bottom:4px;}
 .actions{display:flex;flex-direction:column;gap:10px;padding-bottom:24px;}
 .banner{border-radius:var(--rsm);padding:12px 14px;font-size:14px;display:flex;gap:8px;align-items:flex-start;line-height:1.5;}
 .banner.draft{background:#fffbeb;border:1px solid #fde68a;color:#92400e;}
@@ -401,6 +403,12 @@ body{background:#cfd8e3;display:flex;justify-content:center;min-height:100vh;}
         <button class="btn ghost-blue" style="margin-top:12px;" onclick="addEquip()">＋ 新增設備</button>
       </div>
       <div class="card">
+        <div class="section-title" style="color:var(--red);">🗑 拆除設備紀錄</div>
+        <div class="removed-hint">記錄本次從門市拆除的設備</div>
+        <div id="removed-equip-list"></div>
+        <button class="btn ghost-blue" style="margin-top:12px;border-color:var(--red);color:var(--red);" onclick="addRemovedEquip()">＋ 新增拆除設備</button>
+      </div>
+      <div class="card">
         <div class="field" style="margin-bottom:0;">
           <label>現場處理備註 <span class="req">*</span> <span class="hint">(送驗收前一定要填寫)</span></label>
           <textarea id="f-note" placeholder="請輸入工作完成情況或其他備註..."></textarea>
@@ -448,6 +456,10 @@ body{background:#cfd8e3;display:flex;justify-content:center;min-height:100vh;}
       <div class="card">
         <div class="section-title">設備清單</div>
         <div class="summary-list" id="done-equips"></div>
+      </div>
+      <div class="card" id="done-removed-card">
+        <div class="section-title" style="color:var(--red);">🗑 拆除設備紀錄</div>
+        <div class="summary-list" id="done-removed-equips"></div>
       </div>
       <div class="actions">
         <button class="btn secondary" onclick="backToDetail(false)">返回詳情</button>
@@ -800,7 +812,7 @@ function getOrderState(id){
       status: (o && o.status==='draft') ? 'draft' : 'new',
       arrive:'', leave:'', note:'',
       photos:{'施工前':[],'施工後':[],'驗收單':[],'其他':[]},
-      equips:[], draftTime:'', sentTime:''
+      equips:[], removedEquips:[], draftTime:'', sentTime:''
     };
   }
   return orderStates[id];
@@ -990,6 +1002,7 @@ function goReport(){
   $('report-draft-banner').style.display = state.status==='draft' ? 'flex' : 'none';
   renderPhotoSummary();
   renderEquips();
+  renderRemovedEquips();
   dirty = false;
   showScreen('screen-report');
 }
@@ -1054,6 +1067,35 @@ function addEquip(){ state.equips.push({type:'OC',name:'',qty:1}); renderEquips(
 function delEquip(i){ state.equips.splice(i,1); renderEquips(); dirty=true; }
 function updEquip(i,key,val){ state.equips[i][key]=val; dirty=true; }
 
+function addRemovedEquip(){ state.removedEquips.push({pos:'',model:'',assetNo:'',qty:1}); renderRemovedEquips(); dirty=true; }
+function delRemovedEquip(i){ state.removedEquips.splice(i,1); renderRemovedEquips(); dirty=true; }
+function updRemovedEquip(i,key,val){ state.removedEquips[i][key]=val; dirty=true; }
+
+function getRemovedEquipPositions(){
+  const o = ORDERS.find(x => x.id === currentOrderId);
+  if(!o || !o.screenPos) return [];
+  return o.screenPos.split(/[、,，]/).map(s=>s.trim()).filter(Boolean);
+}
+
+function renderRemovedEquips(){
+  const list=$('removed-equip-list');
+  if(!state.removedEquips.length){ list.innerHTML='<div class="readonly-note">尚未記錄拆除設備</div>'; return; }
+  const positions = getRemovedEquipPositions();
+  const datalistId = 'pos-datalist-'+currentOrderId;
+  let datalistHtml = positions.length ? '<datalist id="'+datalistId+'">'+positions.map(p=>'<option value="'+esc(p)+'">').join('')+'</datalist>' : '';
+  list.innerHTML = datalistHtml;
+  state.removedEquips.forEach((eq,i) => {
+    const d=document.createElement('div');
+    d.className='equip-item removed';
+    d.innerHTML='<button class="del-eq" onclick="delRemovedEquip('+i+')">刪除</button>'+
+      '<div class="equip-row"><input type="text" placeholder="設備位置" value="'+(eq.pos||'').replace(/"/g,'&quot;')+'" '+(positions.length?'list="'+datalistId+'"':'')+' oninput="updRemovedEquip('+i+',\'pos\',this.value)" style="flex:2;"></div>'+
+      '<div class="equip-row"><input type="text" placeholder="品牌 / 型號" value="'+(eq.model||'').replace(/"/g,'&quot;')+'" oninput="updRemovedEquip('+i+',\'model\',this.value)">'+
+        '<input class="qty" type="number" min="1" value="'+eq.qty+'" oninput="updRemovedEquip('+i+',\'qty\',this.value)"></div>'+
+      '<div class="equip-row"><input type="text" placeholder="財編 / 序號（選填）" value="'+(eq.assetNo||'').replace(/"/g,'&quot;')+'" oninput="updRemovedEquip('+i+',\'assetNo\',this.value)"></div>';
+    list.appendChild(d);
+  });
+}
+
 function renderEquips(){
   const list=$('equip-list');
   if(!state.equips.length){ list.innerHTML='<div class="readonly-note">尚未新增設備</div>'; return; }
@@ -1089,7 +1131,7 @@ function askSubmit(){
   collectForm();
   if(!state.arrive){ showToast('請填寫抵達時間'); return; }
   if(!state.note.trim()){ showToast('送出前請填寫現場處理備註'); $('f-note').focus(); return; }
-  $('submit-summary').innerHTML='本次回報含照片 <b>'+photoTotal()+'</b> 張('+CATS.map(c=>c+' '+state.photos[c].length).join('、')+')、設備 <b>'+state.equips.length+'</b> 項。<br><br>送出後內容將<b>無法再修改</b>,並進入驗收流程。';
+  $('submit-summary').innerHTML='本次回報含照片 <b>'+photoTotal()+'</b> 張('+CATS.map(c=>c+' '+state.photos[c].length).join('、')+')、設備 <b>'+state.equips.length+'</b> 項'+(state.removedEquips.length?'、拆除設備 <b>'+state.removedEquips.length+'</b> 筆':'')+' 。<br><br>送出後內容將<b>無法再修改</b>,並進入驗收流程。';
   $('modal-submit').classList.add('show');
 }
 
@@ -1116,6 +1158,18 @@ function renderDone(){
   });
   if(!photoTotal()){ const c=document.createElement('div'); c.className='card'; c.innerHTML='<div class="section-title">派工照片</div><div class="readonly-note">未上傳照片</div>'; wrap.appendChild(c); }
   $('done-equips').innerHTML=state.equips.length?state.equips.map(e=>'<b>'+esc(e.type)+'</b> × '+e.qty+(e.name?' — '+esc(e.name):'')).join('<br>'):'<span class="readonly-note">無</span>';
+  const drc=$('done-removed-card');
+  if(state.removedEquips.length){
+    drc.style.display='';
+    $('done-removed-equips').innerHTML=state.removedEquips.map(e=>
+      '<div style="padding:8px 0;border-bottom:1px solid var(--line);">'+
+        '<b>'+(esc(e.pos)||'位置未填')+'</b> — '+(esc(e.model)||'型號未填')+' × '+e.qty+
+        (e.assetNo?'<br><span style="font-size:12px;color:var(--muted);">財編：'+esc(e.assetNo)+'</span>':'')+
+      '</div>'
+    ).join('');
+  } else {
+    drc.style.display='none';
+  }
 }
 
 function backToDetail(checkDirty){
