@@ -401,7 +401,7 @@ body{background:#cfd8e3;display:flex;justify-content:center;min-height:100vh;}
         📝 <span>這是尚未送出的<b>草稿</b>,修改後可再次儲存或直接送出。</span>
       </div>
       <div class="card">
-        <div id="report-store-name" style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:14px;"></div>
+
         <div class="field">
           <label>抵達時間 <span class="req">*</span></label>
           <input type="datetime-local" id="f-arrive">
@@ -1022,7 +1022,7 @@ function goReport(){
   if(['sent','verified','approved'].includes(state.status)){ renderDone(); showScreen('screen-done'); return; }
   if(state.status==='rejected' && currentRole==='engineer'){ state.status='draft'; renderDetailBanner(); }
   const _ro = ORDERS.find(x => x.id === currentOrderId);
-  $('report-store-name').textContent = _ro ? _ro.store : '';
+
   $('report-header-store').textContent = _ro ? _ro.store : '';
   $('f-arrive').value = state.arrive;
   $('f-leave').value  = state.leave;
