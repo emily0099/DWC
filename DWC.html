@@ -1403,6 +1403,7 @@ function renderSchedule(){
           '<div class="sch-event" data-cat="'+o.cat+'" onclick="openOrder(\''+o.id+'\')">'+
             '<div class="sch-event-store">'+o.store+'</div>'+
             '<div class="sch-event-meta">工單 #'+o.id+'</div>'+
+            (o.address ? '<div class="sch-event-meta" style="opacity:.8;">'+o.address+'</div>' : '')+
             ((currentRole==='admin'||currentRole==='foreman') && scheduleEngineer==='all'
               ? '<div class="sch-event-eng">'+o.team+' / '+o.engineer+'</div>' : '')+
           '</div>'
