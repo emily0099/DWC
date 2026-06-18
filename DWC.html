@@ -746,7 +746,7 @@ function render(){
     else                        badges = '<span class="status-badge pending">待處理</span>';
     return '<div class="order-card" data-cat="'+o.cat+'" onclick="openOrder(\''+o.id+'\')">'+
       '<div class="top-row"><div class="store">'+o.store+(o.network?' <span style="font-size:11px;font-weight:600;background:#f0fdf4;color:#166534;border-radius:99px;padding:1px 7px;margin-left:4px;">'+o.network+'</span>':'')+'</div><div class="cat-tag">'+o.catLabel+'</div></div>'+
-      '<div class="meta">工單 #'+o.id+(o.venue?' <span style="font-size:11px;font-weight:700;background:#ede9fe;color:#6d28d9;border-radius:99px;padding:1px 7px;margin-left:6px;">'+o.venue+'</span>':'')+'</div>'+
+      '<div class="meta">工單 #'+o.id+(o.venue?' <span style="font-size:11px;font-weight:700;'+(o.venue==='Dream Plaza'?'background:#ede9fe;color:#6d28d9;':'background:#e0f2fe;color:#0369a1;')+'border-radius:99px;padding:1px 7px;margin-left:6px;">'+o.venue+'</span>':'')+'</div>'+
       '<div class="info-grid">'+
         '<div class="info-item"><span class="lbl">工班</span><span class="val">'+o.team+'</span></div>'+
         '<div class="info-item"><span class="lbl">工程師</span><span class="val">'+o.engineer+'</span></div>'+
