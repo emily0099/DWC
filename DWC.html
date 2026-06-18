@@ -820,7 +820,6 @@ function render(){
     else if(rs === 'sent')      badges = '<span class="status-badge sent">📤 待覆核</span>';
     else if(rs === 'draft')     badges = '<span class="status-badge draft">📝 草稿未送出</span><span class="status-badge scheduled" style="margin-left:6px;">處理中</span>';
     else if(rs === 'scheduled') badges = '<span class="status-badge scheduled">📅 已安排</span>';
-    else if(o.specDate === todayStr) badges = '<span class="status-badge today">今日施作</span>';
     else                        badges = '<span class="status-badge pending">待處理</span>';
     return '<div class="order-card" data-cat="'+o.cat+'" onclick="openOrder(\''+o.id+'\')">'+
       '<div class="top-row"><div class="store">'+o.store+(o.network?' <span style="font-size:11px;font-weight:600;background:#f0fdf4;color:#166534;border-radius:99px;padding:1px 7px;margin-left:4px;">'+o.network+'</span>':'')+'</div><div class="cat-tag">'+o.catLabel+'</div></div>'+
