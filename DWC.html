@@ -384,6 +384,14 @@ body{background:#cfd8e3;display:flex;justify-content:center;min-height:100vh;}
         </div>
       </div>
 
+      <div class="card" id="d-reminder-card">
+        <div class="section-title">派工提醒</div>
+        <textarea id="d-reminder-input" rows="4" placeholder="輸入給工程師的提醒事項…"
+          style="width:100%;box-sizing:border-box;border:1px solid var(--line);border-radius:8px;padding:10px;font-size:14px;color:var(--text);resize:vertical;font-family:inherit;line-height:1.5;"
+          oninput="saveReminder(this.value)"></textarea>
+        <div id="d-reminder-readonly" style="display:none;font-size:14px;color:var(--text);line-height:1.6;white-space:pre-wrap;"></div>
+      </div>
+
       <div id="admin-action-area"></div>
 
       <div class="actions">
@@ -839,7 +847,7 @@ function switchRoleTo(role, fromModal, eng){
     el.style.display = (role === 'admin' || role === 'foreman') ? '' : 'none';
   });
   if(fromModal) closeModal('modal-role');
-  if(currentOrderId) renderDetailActions();
+  if(currentOrderId){ populateOrderInfo(); renderDetailActions(); }
   updateCounts();
   render();
 }
@@ -859,7 +867,7 @@ function getOrderState(id){
       status: (o && o.status==='draft') ? 'draft' : 'new',
       arrive:'', leave:'', note:'',
       photos:{'施工前':[],'施工後':[],'驗收單':[],'其他':[]},
-      equips:[], removedEquips:[], draftTime:'', sentTime:''
+      equips:[], removedEquips:[], draftTime:'', sentTime:'', reminder:''
     };
   }
   return orderStates[id];
@@ -899,6 +907,19 @@ function populateOrderInfo(){
   $('d-task-content').textContent  = o.taskContent || '—';
   $('d-dispatch-date').textContent = o.dispatchDate;
   $('d-spec-date').textContent     = o.specDate;
+  const reminder = state.reminder || '';
+  const isAdmin = currentRole === 'admin';
+  $('d-reminder-input').style.display    = isAdmin ? '' : 'none';
+  $('d-reminder-readonly').style.display = isAdmin ? 'none' : '';
+  if(isAdmin){
+    $('d-reminder-input').value = reminder;
+  } else {
+    $('d-reminder-readonly').textContent = reminder || '（無派工提醒）';
+  }
+}
+
+function saveReminder(val){
+  if(state) state.reminder = val;
 }
 
 function renderDetailActions(){
