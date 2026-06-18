@@ -770,11 +770,18 @@ function goPage(page){
   window.scrollTo(0,0);
   if(page==='groups') renderGroups();
   if(page==='home')   render();
-  if(page==='my')     renderSchedule();
+  if(page==='my'){
+    renderSchedule();
+    requestAnimationFrame(() => {
+      const sl = $('schedule-list');
+      if(sl) sl.scrollTop = _scheduleScrollTop;
+    });
+  }
 }
 
 /* ── Role ── */
 let _prevPage = 'home'; // page to return to when pressing back from detail
+let _scheduleScrollTop = 0; // saved scroll position of schedule-list
 let currentRole = 'admin'; // 'admin' | 'foreman' | 'engineer'
 let currentEngineer = '';  // 當前登入的工程師代號
 let currentForeman = '';     // 當前登入的工頭名稱
@@ -859,6 +866,10 @@ function getOrderState(id){
 
 function openOrder(id, fromPage){
   _prevPage = fromPage || _currentPage || 'home';
+  if(_prevPage === 'my'){
+    const sl = $('schedule-list');
+    if(sl) _scheduleScrollTop = sl.scrollTop;
+  }
   currentOrderId = id;
   state = getOrderState(id);
   populateOrderInfo();
