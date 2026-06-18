@@ -345,9 +345,9 @@ body{background:#cfd8e3;display:flex;justify-content:center;min-height:100vh;}
   <div class="sch-month-bar">
     <button class="month-nav" onclick="shiftMonth(-1)">‹</button>
     <div class="month-label" id="sch-month-label"></div>
+    <select id="schedule-eng-select" style="display:none;background:rgba(255,255,255,.9);border:none;color:#1e3a4a;border-radius:8px;padding:4px 8px;font-size:13px;font-weight:600;cursor:pointer;max-width:90px;" onchange="setScheduleEngineer(this.value)"></select>
     <button class="month-nav" onclick="shiftMonth(1)">›</button>
   </div>
-  <div id="schedule-eng-wrap" class="schedule-eng-wrap"></div>
   <div id="schedule-list" style="padding-bottom:90px;overflow-y:auto;flex:1;"></div>
   <div class="bottom-nav">
     <div class="nav-item" onclick="goPage('home')"><span class="icon">🏠</span>首頁</div>
@@ -1551,18 +1551,17 @@ function renderSchedule(){
   /* month label */
   $('sch-month-label').textContent = scheduleMonth.getFullYear()+'年 '+(scheduleMonth.getMonth()+1)+'月';
 
-  /* engineer chips (admin only) */
-  const wrap = $('schedule-eng-wrap');
+  /* engineer dropdown (admin / foreman only) */
+  const sel = $('schedule-eng-select');
   if(currentRole === 'admin' || currentRole === 'foreman'){
     const teamOrders = currentRole === 'foreman' ? ORDERS.filter(o => o.team === currentForemanTeam) : ORDERS;
     const engs = [...new Set(teamOrders.map(o => o.engineer).filter(Boolean))].sort();
-    wrap.style.display = '';
-    wrap.innerHTML = ['all', ...engs].map(e =>
-      '<button class="filter-pill'+(scheduleEngineer===e?' active':'')+'" onclick="setScheduleEngineer(\''+e+'\')">'+
-        (e==='all' ? '👤 全部' : e)+'</button>'
-    ).join('');
+    sel.innerHTML = '<option value="all">👤 全部</option>' +
+      engs.map(e => '<option value="'+e+'">'+e+'</option>').join('');
+    sel.value = scheduleEngineer;
+    sel.style.display = '';
   } else {
-    wrap.style.display = 'none';
+    sel.style.display = 'none';
   }
 
   /* filter orders by expectedDate */
