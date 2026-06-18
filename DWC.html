@@ -842,6 +842,10 @@ function render(){
 function getRuntimeStatus(id, defaultStatus){
   const rs = orderStates[id];
   if(rs && rs.status !== 'new') return rs.status;
+  if(defaultStatus === 'pending'){
+    const o = ORDERS.find(x => x.id === id);
+    if(o && o.engineer && o.expectedDate) return 'scheduled';
+  }
   return defaultStatus;
 }
 const STATUS_LABEL = {today:'今日施作', draft:'草稿未送出', pending:'待處理', scheduled:'已安排', sent:'待覆核', verified:'待驗收', rejected:'覆核未過', approved:'已驗收'};
