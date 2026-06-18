@@ -1555,10 +1555,13 @@ function renderSchedule(){
   /* engineer dropdown (admin / foreman only) */
   const sel = $('schedule-eng-select');
   if(currentRole === 'admin' || currentRole === 'foreman'){
+    const relevantGroups = currentRole === 'foreman' ? GROUPS.filter(g => g.name === currentForemanTeam) : GROUPS;
+    const foremanNames = relevantGroups.map(g => g.foreman);
     const teamOrders = currentRole === 'foreman' ? ORDERS.filter(o => o.team === currentForemanTeam) : ORDERS;
-    const engs = [...new Set(teamOrders.map(o => o.engineer).filter(Boolean))].sort();
+    const engNames = [...new Set(teamOrders.map(o => o.engineer).filter(Boolean))];
+    const all = [...new Set([...foremanNames, ...engNames])].sort();
     sel.innerHTML = '<option value="all">👤 全部</option>' +
-      engs.map(e => '<option value="'+e+'">'+e+'</option>').join('');
+      all.map(e => '<option value="'+e+'">'+e+'</option>').join('');
     sel.value = scheduleEngineer;
     sel.style.display = '';
   } else {
