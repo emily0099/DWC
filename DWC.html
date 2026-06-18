@@ -350,7 +350,8 @@ body{background:#cfd8e3;display:flex;justify-content:center;min-height:100vh;}
   <div class="screen" id="screen-detail">
     <div class="page-header">
       <button class="back" onclick="goPage(_prevPage)">←</button>
-      <h1>工單詳情</h1>
+      <h1 style="margin-right:0;">工單詳情</h1>
+      <span id="detail-header-store" style="font-size:12px;font-weight:700;background:#fef08a;color:#78350f;border-radius:99px;padding:3px 10px;white-space:nowrap;max-width:120px;overflow:hidden;text-overflow:ellipsis;"></span>
     </div>
     <div class="content">
       <div id="status-banner-area"></div>
@@ -903,6 +904,7 @@ function populateOrderInfo(){
   const o = ORDERS.find(x => x.id === currentOrderId);
   if(!o) return;
   $('d-store').textContent         = o.store;
+  const hdr = $('detail-header-store'); if(hdr) hdr.textContent = o.store;
   $('d-store-no').textContent      = o.storeNo;
   $('d-address').innerHTML          = o.address
     ? '<a href="https://maps.google.com/maps?q='+encodeURIComponent(o.address)+'" target="_blank" style="color:var(--blue);text-decoration:underline;">'+o.address+'</a>'
