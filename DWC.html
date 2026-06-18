@@ -1503,7 +1503,7 @@ function renderDone(){
       } else if(state.status === 'rejected'){
         html += '<div class="banner rejected" style="margin:8px 16px 0;">❌ <span>覆核未過（'+(state.approvedTime||'')+'）</span></div>';
       }
-      if(['sent','verified','rejected'].includes(state.status)){
+      if(['sent','rejected'].includes(state.status)){
         html += '<div style="margin:8px 16px 0;">' +
           '<button class="btn secondary" style="width:100%;" onclick="adminEditReport()">✏️ 編輯回報內容</button>' +
           '</div>';
