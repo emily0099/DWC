@@ -870,9 +870,18 @@ function goPage(page){
   if(page==='home')   render();
   if(page==='my'){
     renderSchedule();
+    const fromDetail = _returnToSchedule;
+    _returnToSchedule = false;
     requestAnimationFrame(() => requestAnimationFrame(() => {
       const sl = document.getElementById('schedule-list');
-      if(sl) sl.scrollTop = _scheduleScrollTop;
+      if(!sl) return;
+      if(fromDetail){
+        sl.scrollTop = _scheduleScrollTop;
+      } else {
+        const todayEl = document.getElementById('sch-today-day');
+        if(todayEl) sl.scrollTop = todayEl.offsetTop - sl.offsetTop;
+        else sl.scrollTop = 0;
+      }
     }));
   }
 }
@@ -880,6 +889,7 @@ function goPage(page){
 /* ── Role ── */
 let _prevPage = 'home'; // page to return to when pressing back from detail
 let _scheduleScrollTop = 0; // saved scroll position of schedule-list
+let _returnToSchedule = false; // true when returning from detail → restore scroll, else scroll to today
 let currentRole = 'admin'; // 'admin' | 'foreman' | 'engineer'
 let currentEngineer = '';  // 當前登入的工程師代號
 let currentForeman = '';     // 當前登入的工頭名稱
@@ -968,6 +978,7 @@ function openOrder(id, fromPage){
   if(_prevPage === 'my'){
     const sl = $('schedule-list');
     if(sl) _scheduleScrollTop = sl.scrollTop;
+    _returnToSchedule = true;
   }
   currentOrderId = id;
   state = getOrderState(id);
@@ -1599,7 +1610,8 @@ function renderSchedule(){
       lastWeekLabel = wl;
     }
     const todayCls = isToday(dateStr) ? ' today' : '';
-    html += '<div class="schedule-day">'+
+    const todayId  = isToday(dateStr) ? ' id="sch-today-day"' : '';
+    html += '<div class="schedule-day"'+todayId+'>'+
       '<div class="sch-date-col">'+
         '<div class="sch-weekday">週'+WEEKDAYS[d.getDay()]+'</div>'+
         '<div class="sch-daynum'+todayCls+'">'+d.getDate()+'</div>'+
