@@ -122,8 +122,22 @@ body{background:#cfd8e3;display:flex;justify-content:center;min-height:100vh;}
 /* ── Bottom nav ── */
 .bottom-nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:420px;background:#fff;border-top:1px solid var(--line);display:flex;padding:6px 4px;box-shadow:0 -2px 8px rgba(0,0,0,.06);z-index:20;}
 .nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:7px 0;border-radius:10px;cursor:pointer;color:var(--muted);font-size:11px;font-weight:600;}
-.nav-item .icon{font-size:20px;}
+.nav-item .icon{font-size:20px;position:relative;display:inline-block;}
+.nav-item .icon .notif-dot{position:absolute;top:-2px;right:-4px;background:#ef4444;color:#fff;font-size:10px;font-weight:700;border-radius:99px;min-width:16px;height:16px;line-height:16px;text-align:center;padding:0 3px;box-sizing:border-box;}
 .nav-item.active{color:var(--blue);}
+.notif-drawer{position:fixed;bottom:0;left:50%;transform:translateX(-50%) translateY(100%);width:100%;max-width:420px;background:#fff;border-radius:18px 18px 0 0;box-shadow:0 -4px 20px rgba(0,0,0,.15);z-index:40;transition:transform .3s ease;max-height:80vh;display:flex;flex-direction:column;}
+.notif-drawer.open{transform:translateX(-50%) translateY(0);}
+.notif-drawer-header{display:flex;align-items:center;justify-content:space-between;padding:16px 18px 12px;border-bottom:1px solid var(--line);}
+.notif-drawer-header h2{font-size:16px;font-weight:700;}
+.notif-drawer-body{overflow-y:auto;padding:10px 14px 90px;}
+.notif-item{display:flex;align-items:flex-start;gap:12px;padding:12px 0;border-bottom:1px solid var(--line);cursor:pointer;}
+.notif-item:last-child{border-bottom:none;}
+.notif-item .ni-left{flex:1;}
+.notif-item .ni-store{font-size:15px;font-weight:700;color:var(--text);}
+.notif-item .ni-meta{font-size:12px;color:var(--muted);margin-top:2px;}
+.notif-item .ni-overdue{font-size:11px;font-weight:700;color:#ef4444;background:#fff1f2;border-radius:99px;padding:2px 8px;white-space:nowrap;margin-top:4px;display:inline-block;}
+.notif-mask{position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:39;display:none;}
+.notif-mask.open{display:block;}
 
 /* ── Group cards ── */
 .group-card{background:#fff;border-radius:var(--radius);padding:16px;box-shadow:0 1px 3px rgba(0,0,0,.06);}
@@ -305,7 +319,7 @@ body{background:#cfd8e3;display:flex;justify-content:center;min-height:100vh;}
   <div class="bottom-nav">
     <div class="nav-item active" onclick="goPage('home')"><span class="icon">🏠</span>首頁</div>
     <div class="nav-item nav-groups-item" onclick="goPage('groups')"><span class="icon">👥</span>工班列表</div>
-    <div class="nav-item" onclick="alert('掃描(原型未實作)')"><span class="icon">🔔</span>案件通知</div>
+    <div class="nav-item" onclick="openNotif()"><span class="icon">🔔<span class="notif-dot" id="notif-badge" style="display:none;"></span></span>案件通知</div>
     <div class="nav-item" onclick="goPage('my')"><span class="icon">📅</span>入店排程</div>
   </div>
 </div>
@@ -321,7 +335,7 @@ body{background:#cfd8e3;display:flex;justify-content:center;min-height:100vh;}
   <div class="bottom-nav">
     <div class="nav-item" onclick="goPage('home')"><span class="icon">🏠</span>首頁</div>
     <div class="nav-item active" onclick="goPage('groups')"><span class="icon">👥</span>工班列表</div>
-    <div class="nav-item" onclick="alert('掃描(原型未實作)')"><span class="icon">🔔</span>案件通知</div>
+    <div class="nav-item" onclick="openNotif()"><span class="icon">🔔<span class="notif-dot" id="notif-badge" style="display:none;"></span></span>案件通知</div>
     <div class="nav-item" onclick="goPage('my')"><span class="icon">📅</span>入店排程</div>
   </div>
 </div>
@@ -338,7 +352,7 @@ body{background:#cfd8e3;display:flex;justify-content:center;min-height:100vh;}
   <div class="bottom-nav">
     <div class="nav-item" onclick="goPage('home')"><span class="icon">🏠</span>首頁</div>
     <div class="nav-item nav-groups-item" onclick="goPage('groups')"><span class="icon">👥</span>工班列表</div>
-    <div class="nav-item" onclick="alert('掃描(原型未實作)')"><span class="icon">🔔</span>案件通知</div>
+    <div class="nav-item" onclick="openNotif()"><span class="icon">🔔<span class="notif-dot" id="notif-badge" style="display:none;"></span></span>案件通知</div>
     <div class="nav-item active" onclick="goPage('my')"><span class="icon">📅</span>入店排程</div>
   </div>
 </div>
@@ -556,6 +570,16 @@ body{background:#cfd8e3;display:flex;justify-content:center;min-height:100vh;}
 <input type="file" id="photo-input" accept="image/*" multiple style="display:none">
 <div class="toast" id="toast"></div>
 
+<!-- 案件通知 drawer -->
+<div class="notif-mask" id="notif-mask" onclick="closeNotif()"></div>
+<div class="notif-drawer" id="notif-drawer">
+  <div class="notif-drawer-header">
+    <h2>🔔 案件通知</h2>
+    <button onclick="closeNotif()" style="background:none;border:none;font-size:22px;cursor:pointer;color:var(--muted);line-height:1;">×</button>
+  </div>
+  <div class="notif-drawer-body" id="notif-list"></div>
+</div>
+
 <script>
 /* ── Data ── */
 const ORDERS = [
@@ -684,6 +708,60 @@ function renderTeamFilters(){
   ).join('');
 }
 document.getElementById('search-input').addEventListener('input', render);
+
+function getOverdueOrders(){
+  const today = new Date().toLocaleDateString('sv-SE');
+  return ORDERS.filter(o => {
+    if(!o.dispatchDate || o.dispatchDate >= today) return false;
+    const rs = getRuntimeStatus(o.id, o.status);
+    if(['approved'].includes(rs)) return false;
+    if(currentRole === 'engineer' && o.engineer !== currentEngineer) return false;
+    if(currentRole === 'foreman' && o.team !== currentForemanTeam) return false;
+    return true;
+  });
+}
+
+function updateNotifBadge(){
+  const n = getOverdueOrders().length;
+  document.querySelectorAll('#notif-badge').forEach(el => {
+    el.textContent = n > 0 ? (n > 99 ? '99+' : n) : '';
+    el.style.display = n > 0 ? '' : 'none';
+  });
+}
+
+function openNotif(){
+  const orders = getOverdueOrders();
+  const today = new Date().toLocaleDateString('sv-SE');
+  const list = $('notif-list');
+  if(!orders.length){
+    list.innerHTML = '<div style="text-align:center;padding:40px 0;color:var(--muted);font-size:14px;">目前沒有逾期未處理的案件</div>';
+  } else {
+    list.innerHTML = orders.map(o => {
+      const rs = getRuntimeStatus(o.id, o.status);
+      const diffDays = Math.floor((new Date(today) - new Date(o.dispatchDate)) / 86400000);
+      const catColors = {dismantle:'#0891b2',convert:'#7c4dbe',repair:'#fbbf24',other:'#6b7280'};
+      return '<div class="notif-item" onclick="closeNotif();openOrder(\''+o.id+'\')">'+
+        '<div class="ni-left">'+
+          '<div class="ni-store">'+o.store+
+            (o.venue==='Dream Plaza'
+              ? ' <span style="font-size:11px;font-weight:700;background:#ede9fe;color:#6d28d9;border-radius:99px;padding:1px 6px;">'+o.venue+'</span>'
+              : o.venue ? ' <span style="font-size:11px;font-weight:700;background:#e0f2fe;color:#0369a1;border-radius:99px;padding:1px 6px;">'+o.venue+'</span>' : '')+
+          '</div>'+
+          '<div class="ni-meta">派工日期：'+o.dispatchDate+' · '+o.team+(o.engineer?' · '+o.engineer:'')+'</div>'+
+          '<span class="ni-overdue">逾期 '+diffDays+' 天</span>'+
+        '</div>'+
+        '<div style="font-size:12px;font-weight:700;color:'+catColors[o.cat]+';">'+o.catLabel+'</div>'+
+      '</div>';
+    }).join('');
+  }
+  $('notif-mask').classList.add('open');
+  $('notif-drawer').classList.add('open');
+}
+
+function closeNotif(){
+  $('notif-mask').classList.remove('open');
+  $('notif-drawer').classList.remove('open');
+}
 
 function updateCounts(){
   const roleOrders = ORDERS.filter(o => {
@@ -861,6 +939,7 @@ function switchRoleTo(role, fromModal, eng){
   if(fromModal) closeModal('modal-role');
   if(currentOrderId){ populateOrderInfo(); renderDetailActions(); }
   updateCounts();
+  updateNotifBadge();
   render();
 }
 
@@ -1540,6 +1619,7 @@ function renderSchedule(){
 
 switchRoleTo(currentRole);
 updateCounts();
+updateNotifBadge();
 renderTeamFilters();
 render();
 </script>
