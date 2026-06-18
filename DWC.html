@@ -881,15 +881,10 @@ function goPage(page){
       if(!sl) return;
       if(fromDetail){
         sl.scrollTop = _scheduleScrollTop;
+        window.scrollTo(0, _scheduleScrollTop);
       } else {
         const todayEl = document.getElementById('sch-today-day');
-        if(todayEl){
-          const slRect = sl.getBoundingClientRect();
-          const todayRect = todayEl.getBoundingClientRect();
-          sl.scrollTop = sl.scrollTop + (todayRect.top - slRect.top);
-        } else {
-          sl.scrollTop = 0;
-        }
+        if(todayEl) todayEl.scrollIntoView({behavior:'instant', block:'start'});
       }
     }));
   }
@@ -986,7 +981,7 @@ function openOrder(id, fromPage){
   _prevPage = fromPage || _currentPage || 'home';
   if(_prevPage === 'my'){
     const sl = $('schedule-list');
-    if(sl) _scheduleScrollTop = sl.scrollTop;
+    _scheduleScrollTop = (sl ? sl.scrollTop : 0) || window.scrollY;
     _returnToSchedule = true;
   }
   currentOrderId = id;
@@ -1543,13 +1538,8 @@ function jumpToToday(){
   scheduleMonth = new Date();
   renderSchedule();
   requestAnimationFrame(() => requestAnimationFrame(() => {
-    const sl = $('schedule-list');
     const todayEl = $('sch-today-day');
-    if(sl && todayEl){
-      const slRect = sl.getBoundingClientRect();
-      const todayRect = todayEl.getBoundingClientRect();
-      sl.scrollTop = sl.scrollTop + (todayRect.top - slRect.top);
-    }
+    if(todayEl) todayEl.scrollIntoView({behavior:'instant', block:'start'});
   }));
 }
 
