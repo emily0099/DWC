@@ -375,13 +375,7 @@ body{background:#cfd8e3;display:flex;justify-content:center;min-height:100vh;}
         <div class="row"><div class="label">螢幕位置</div><div class="value" id="d-screen-pos"></div></div>
         <div class="row"><div class="label">任務內容</div><div class="value" id="d-task-content"></div></div>
         <div class="row"><div class="label">派工日期</div><div class="value" id="d-dispatch-date"></div></div>
-        <div class="row">
-          <div class="label">施作時間</div>
-          <div class="value" style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
-            <input type="date" id="d-spec-date-input" class="date-input" onchange="saveSpecDate(this.value)">
-            <input type="time" id="d-spec-time-input" class="date-input" style="width:110px;" onchange="saveSpecTime(this.value)">
-          </div>
-        </div>
+        <div class="row"><div class="label">施作時間</div><div class="value" id="d-spec-date"></div></div>
         <div class="row">
           <div class="label">預計入店</div>
           <div class="value">
@@ -927,8 +921,7 @@ function populateOrderInfo(){
   $('d-screen-pos').textContent    = o.screenPos || '—';
   $('d-task-content').textContent  = o.taskContent || '—';
   $('d-dispatch-date').textContent  = o.dispatchDate;
-  $('d-spec-date-input').value      = o.specDate || '';
-  $('d-spec-time-input').value      = o.specTime || '';
+  $('d-spec-date').textContent      = o.specDate ? o.specDate + (o.specTime ? '  ' + o.specTime : '') : '—';
   const reminder = state.reminder || '';
   const isAdmin = currentRole === 'admin';
   $('d-reminder-input').style.display    = isAdmin ? '' : 'none';
