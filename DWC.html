@@ -821,28 +821,25 @@ function renderNotifEvents(){
     list.innerHTML='<div style="text-align:center;padding:40px 0;color:var(--muted);font-size:14px;">近七天沒有事件通知</div>';
     return;
   }
-  const TYPE_TITLE={'新派工':'新工單派給你','取消':'工單已取消','資訊異動':'工單資訊異動'};
   function tsLabel(ts){
-    // ts format: "2026-06-18 16:44"
     const [date, time] = ts.split(' ');
-    const mmdd = date.slice(5).replace('-','/'); // "06/18"
-    return mmdd + ' ' + time;
+    return date.slice(5).replace('-','/') + ' ' + time;
   }
   list.innerHTML=events.map(e=>{
     const o=ORDERS.find(x=>x.id===e.orderId);
     const click=o?'onclick="closeNotif();openOrder(\''+e.orderId+'\')"':'';
-    const subtitle=esc(e.store)+(o&&o.address?'・'+esc(o.address):'');
+    const addr=o&&o.address?esc(o.address):'';
     const venue=o&&o.venue?esc(o.venue):'';
     return '<div class="notif-item" '+click+'>'+
       '<div class="ni-left" style="width:100%;">'+
-        '<div class="ni-store">'+esc(TYPE_TITLE[e.type]||e.type)+'</div>'+
-        '<div class="ni-event-meta" style="margin:2px 0 6px;">'+subtitle+'</div>'+
-        '<div style="display:flex;align-items:center;justify-content:space-between;">'+
+        '<div class="ni-store">'+esc(e.store)+'</div>'+
+        (addr?'<div class="ni-event-meta" style="margin:2px 0 6px;">'+addr+'</div>':'')+
+        '<div style="display:flex;align-items:center;justify-content:space-between;margin-top:4px;">'+
           '<div style="display:flex;align-items:center;gap:6px;">'+
             '<span class="ne-badge '+e.type+'">'+e.type+'</span>'+
             (venue?'<span style="font-size:12px;color:var(--muted);">'+venue+'</span>':'')+
           '</div>'+
-          '<span class="ni-time" style="font-size:12px;color:var(--muted);">'+tsLabel(e.ts)+'</span>'+
+          '<span style="font-size:12px;color:var(--muted);">'+tsLabel(e.ts)+'</span>'+
         '</div>'+
       '</div>'+
     '</div>';
