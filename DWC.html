@@ -841,7 +841,7 @@ function renderNotifEvents(){
       '<div class="ni-left" style="flex:1;min-width:0;">'+
         '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">'+
           '<span class="ni-store">'+esc(e.store)+'</span>'+
-          (venue?'<span style="font-size:11px;font-weight:700;background:#e0f2fe;color:#0369a1;border-radius:99px;padding:1px 7px;">'+venue+'</span>':'')+
+          (venue?'<span style="font-size:11px;font-weight:700;'+(o&&o.venue==='Dream Plaza'?'background:#ede9fe;color:#6d28d9;':'background:#e0f2fe;color:#0369a1;')+'border-radius:99px;padding:1px 7px;">'+venue+'</span>':'')+
         '</div>'+
         (addr?'<div class="ni-event-meta" style="margin-top:2px;">'+addr+'</div>':'')+
       '</div>'+
