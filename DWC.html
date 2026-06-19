@@ -211,8 +211,8 @@ body{background:#cfd8e3;display:flex;justify-content:center;min-height:100vh;}
 .field textarea{min-height:96px;resize:vertical;}
 .field input:focus,.field textarea:focus{outline:2px solid #bfdbfe;border-color:var(--blue);}
 .photo-counts{text-align:center;font-size:15px;line-height:1.9;padding:4px 0;}
-.dropzone{border:2px dashed #94a3b8;border-radius:8px;background:#f8fafc;color:var(--muted);text-align:center;padding:22px 10px;font-size:14px;line-height:1.7;cursor:pointer;margin-top:8px;}
-.dropzone:active{border-color:var(--blue);background:#eff6ff;}
+.dropzone{border:2px dashed #94a3b8;border-radius:8px;background:#f8fafc;color:var(--muted);text-align:center;padding:22px 10px;font-size:14px;line-height:1.7;cursor:pointer;margin-top:8px;transition:border-color .15s,background .15s;}
+.dropzone:active,.dropzone.dragover{border-color:var(--blue);background:#eff6ff;color:var(--blue);}
 .cat-photos{display:flex;flex-direction:column;gap:12px;margin-top:12px;}
 .cat-photo{display:flex;gap:10px;align-items:flex-start;}
 .cat-photo .thumb{position:relative;width:96px;flex-shrink:0;}
@@ -1400,7 +1400,7 @@ function renderPhotoCats(){
     card.className = 'card';
     card.style.marginBottom = '14px';
     let inner = '<div class="section-title">'+cat+' <span class="badge count">'+state.photos[cat].length+'</span></div>'+
-      '<div class="dropzone" onclick="pickPhotos(\''+cat+'\')">點擊上傳圖片<br>支援多張圖片上傳</div>';
+      '<div class="dropzone" data-cat="'+cat+'" onclick="pickPhotos(\''+cat+'\')">點擊或拖曳上傳圖片<br>支援多張圖片上傳</div>';
     if(state.photos[cat].length){
       inner += '<div class="cat-photos">'+state.photos[cat].map((p,i) =>
         '<div class="cat-photo">'+
@@ -1414,19 +1414,39 @@ function renderPhotoCats(){
     card.innerHTML = inner;
     wrap.appendChild(card);
   });
+  setupDropzones();
 }
 
 function pickPhotos(cat){ activeCat=cat; $('photo-input').click(); }
 
-$('photo-input').addEventListener('change', function(){
-  const files = Array.from(this.files||[]);
+function addPhotosFromFiles(cat, files){
+  files = Array.from(files).filter(f=>f.type.startsWith('image/'));
+  if(!files.length) return;
   let pending = files.length;
   files.forEach(f => {
     const r = new FileReader();
-    r.onload = e => { state.photos[activeCat].push({src:e.target.result,note:'',isNew:true}); if(!--pending) renderPhotoCats(); };
+    r.onload = e => { state.photos[cat].push({src:e.target.result,note:'',isNew:true}); if(!--pending){ dirty=true; renderPhotoCats(); } };
     r.readAsDataURL(f);
   });
-  this.value=''; dirty=true;
+}
+
+function setupDropzones(){
+  document.querySelectorAll('.dropzone[data-cat]').forEach(el => {
+    const cat = el.dataset.cat;
+    el.addEventListener('dragenter', e => e.preventDefault());
+    el.addEventListener('dragover', e => { e.preventDefault(); el.classList.add('dragover'); });
+    el.addEventListener('dragleave', () => el.classList.remove('dragover'));
+    el.addEventListener('drop', e => {
+      e.preventDefault();
+      el.classList.remove('dragover');
+      addPhotosFromFiles(cat, e.dataTransfer.files);
+    });
+  });
+}
+
+$('photo-input').addEventListener('change', function(){
+  addPhotosFromFiles(activeCat, this.files||[]);
+  this.value='';
 });
 
 function delPhoto(cat,i){ state.photos[cat].splice(i,1); dirty=true; renderPhotoCats(); }
