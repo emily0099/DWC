@@ -830,8 +830,13 @@ function renderNotifEvents(){
     const click=o?'onclick="closeNotif();openOrder(\''+e.orderId+'\')"':'';
     const addr=o&&o.address?esc(o.address):'';
     const venue=o&&o.venue?esc(o.venue):'';
-    return '<div class="notif-item" '+click+'>'+
-      '<div class="ni-left" style="width:100%;">'+
+    const cat=o?o.cat:'other';
+    const catLabel=o?esc(o.catLabel):esc(e.catLabel||'');
+    const catBg={dismantle:'var(--c-dismantle)',convert:'var(--c-convert)',repair:'var(--c-repair)',other:'var(--c-other)'};
+    const catColor={repair:'#78350f'};
+    const catStyle='background:'+catBg[cat]+';color:'+(catColor[cat]||'#fff')+';font-size:11px;font-weight:700;padding:3px 9px;border-radius:99px;';
+    return '<div class="notif-item" '+click+' style="align-items:flex-start;">'+
+      '<div class="ni-left" style="flex:1;">'+
         '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">'+
           '<span class="ni-store">'+esc(e.store)+'</span>'+
           (venue?'<span style="font-size:11px;font-weight:700;background:#e0f2fe;color:#0369a1;border-radius:99px;padding:1px 7px;">'+venue+'</span>':'')+
@@ -842,6 +847,7 @@ function renderNotifEvents(){
           '<span style="font-size:12px;color:var(--muted);">'+tsLabel(e.ts)+'</span>'+
         '</div>'+
       '</div>'+
+      '<span style="'+catStyle+';margin-left:8px;flex-shrink:0;">'+catLabel+'</span>'+
     '</div>';
   }).join('');
 }
