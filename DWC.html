@@ -775,10 +775,19 @@ let _notifTab = 'events';
 
 let _notifReadAt = 0; // timestamp when user last opened notif drawer
 
+function notifEventVisible(e){
+  if(currentRole==='foreman') return e.team===currentForemanTeam;
+  if(currentRole==='engineer'){
+    const o=ORDERS.find(x=>x.id===e.orderId);
+    return o&&o.engineer===currentEngineer;
+  }
+  return true;
+}
+
 function updateNotifBadge(){
   const today = new Date().toLocaleDateString('sv-SE');
   const cutoff = new Date(today); cutoff.setDate(cutoff.getDate()-7);
-  const hasNew = NOTIF_EVENTS.some(e=>new Date(e.ts)>=cutoff && new Date(e.ts).getTime()>_notifReadAt)
+  const hasNew = NOTIF_EVENTS.some(e=>notifEventVisible(e)&&new Date(e.ts)>=cutoff&&new Date(e.ts).getTime()>_notifReadAt)
     || getOverdueOrders().length > 0;
   document.querySelectorAll('#notif-badge').forEach(el => {
     el.style.display = hasNew ? '' : 'none';
@@ -816,7 +825,7 @@ function renderNotifContent(){
 function renderNotifEvents(){
   const todayStr = new Date().toLocaleDateString('sv-SE');
   const cutoff = new Date(todayStr); cutoff.setDate(cutoff.getDate()-7);
-  const events = NOTIF_EVENTS.filter(e=>new Date(e.ts)>=cutoff)
+  const events = NOTIF_EVENTS.filter(e=>new Date(e.ts)>=cutoff&&notifEventVisible(e))
     .sort((a,b)=>b.ts.localeCompare(a.ts));
   const list = $('notif-list');
   if(!events.length){
