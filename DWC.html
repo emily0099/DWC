@@ -787,8 +787,9 @@ function notifEventVisible(e){
 function updateNotifBadge(){
   const today = new Date().toLocaleDateString('sv-SE');
   const cutoff = new Date(today); cutoff.setDate(cutoff.getDate()-7);
-  const hasNew = NOTIF_EVENTS.some(e=>notifEventVisible(e)&&new Date(e.ts)>=cutoff&&new Date(e.ts).getTime()>_notifReadAt)
-    || getOverdueOrders().length > 0;
+  const hasNewEvents = NOTIF_EVENTS.some(e=>notifEventVisible(e)&&new Date(e.ts)>=cutoff&&new Date(e.ts).getTime()>_notifReadAt);
+  const hasOverdue = _notifReadAt===0 && getOverdueOrders().length>0;
+  const hasNew = hasNewEvents || hasOverdue;
   document.querySelectorAll('#notif-badge').forEach(el => {
     el.style.display = hasNew ? '' : 'none';
   });
