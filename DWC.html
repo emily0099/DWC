@@ -891,7 +891,17 @@ function goPage(page){
   document.getElementById('page-my').style.display     = page==='my'     ? 'flex' : 'none';
   window.scrollTo(0,0);
   if(page==='groups') renderGroups();
-  if(page==='home')   render();
+  if(page==='home'){
+    const fromDetail = _returnToHome;
+    _returnToHome = false;
+    render();
+    if(fromDetail){
+      const savedScroll = _homeScrollTop;
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        window.scrollTo(0, savedScroll);
+      }));
+    }
+  }
   if(page==='my'){
     const fromDetail = _returnToSchedule;
     _returnToSchedule = false;
@@ -912,6 +922,8 @@ function goPage(page){
 
 /* ── Role ── */
 let _prevPage = 'home'; // page to return to when pressing back from detail
+let _homeScrollTop = 0; // saved scroll position of home page
+let _returnToHome = false; // true when returning from detail → restore home scroll
 let _scheduleScrollTop = 0; // saved scroll position of schedule-list
 let _returnToSchedule = false; // true when returning from detail → restore scroll, else scroll to today
 let currentRole = 'admin'; // 'admin' | 'foreman' | 'engineer'
@@ -999,6 +1011,10 @@ function getOrderState(id){
 
 function openOrder(id, fromPage){
   _prevPage = fromPage || _currentPage || 'home';
+  if(_prevPage === 'home'){
+    _homeScrollTop = window.scrollY;
+    _returnToHome = true;
+  }
   if(_prevPage === 'my'){
     const sl = $('schedule-list');
     _scheduleScrollTop = (sl ? sl.scrollTop : 0) || window.scrollY;
@@ -1576,7 +1592,7 @@ function renderDone(){
       }
       if(['sent','rejected'].includes(state.status)){
         html += '<div style="margin:8px 16px 0;">' +
-          '<button class="btn secondary" style="width:100%;" onclick="adminEditReport()">✏️ 編輯回報內容</button>' +
+          '<button class="btn warn" style="width:100%;" onclick="adminEditReport()">編輯回報內容</button>' +
           '</div>';
       }
       daa.innerHTML = html;
