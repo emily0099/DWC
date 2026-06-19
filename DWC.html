@@ -123,7 +123,7 @@ body{background:#cfd8e3;display:flex;justify-content:center;min-height:100vh;}
 .bottom-nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:420px;background:#fff;border-top:1px solid var(--line);display:flex;padding:6px 4px;box-shadow:0 -2px 8px rgba(0,0,0,.06);z-index:20;}
 .nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:7px 0;border-radius:10px;cursor:pointer;color:var(--muted);font-size:11px;font-weight:600;}
 .nav-item .icon{font-size:20px;position:relative;display:inline-block;}
-.nav-item .icon .notif-dot{position:absolute;top:-2px;right:-4px;background:#ef4444;color:#fff;font-size:10px;font-weight:700;border-radius:99px;min-width:16px;height:16px;line-height:16px;text-align:center;padding:0 3px;box-sizing:border-box;}
+.nav-item .icon .notif-dot{position:absolute;top:-1px;right:-3px;background:#ef4444;border-radius:50%;width:8px;height:8px;}
 .nav-item.active{color:var(--blue);}
 .notif-drawer{position:fixed;bottom:0;left:50%;transform:translateX(-50%) translateY(100%);width:100%;max-width:420px;background:#fff;border-radius:18px 18px 0 0;box-shadow:0 -4px 20px rgba(0,0,0,.15);z-index:40;transition:transform .3s ease;max-height:80vh;display:flex;flex-direction:column;}
 .notif-drawer.open{transform:translateX(-50%) translateY(0);}
@@ -773,15 +773,15 @@ function getOverdueOrders(){
 
 let _notifTab = 'events';
 
+let _notifReadAt = 0; // timestamp when user last opened notif drawer
+
 function updateNotifBadge(){
   const today = new Date().toLocaleDateString('sv-SE');
   const cutoff = new Date(today); cutoff.setDate(cutoff.getDate()-7);
-  const ev7 = NOTIF_EVENTS.filter(e=>new Date(e.ts)>=cutoff).length;
-  const ov = getOverdueOrders().length;
-  const n = ev7 + ov;
+  const hasNew = NOTIF_EVENTS.some(e=>new Date(e.ts)>=cutoff && new Date(e.ts).getTime()>_notifReadAt)
+    || getOverdueOrders().length > 0;
   document.querySelectorAll('#notif-badge').forEach(el => {
-    el.textContent = n > 0 ? (n > 99 ? '99+' : n) : '';
-    el.style.display = n > 0 ? '' : 'none';
+    el.style.display = hasNew ? '' : 'none';
   });
 }
 
@@ -801,6 +801,8 @@ function switchNotifTab(tab){
 }
 
 function openNotif(){
+  _notifReadAt = Date.now();
+  updateNotifBadge();
   $('notif-mask').classList.add('open');
   $('notif-drawer').classList.add('open');
   renderNotifContent();
