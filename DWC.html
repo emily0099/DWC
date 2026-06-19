@@ -823,11 +823,10 @@ function renderNotifEvents(){
   }
   const TYPE_TITLE={'新派工':'新工單派給你','取消':'工單已取消','資訊異動':'工單資訊異動'};
   function tsLabel(ts){
-    const d=new Date(ts), dStr=d.toLocaleDateString('sv-SE'), time=ts.slice(-5);
-    if(dStr===todayStr) return time;
-    const yest=new Date(todayStr); yest.setDate(yest.getDate()-1);
-    if(dStr===yest.toLocaleDateString('sv-SE')) return '昨天 '+time;
-    return Math.floor((new Date(todayStr)-new Date(dStr))/86400000)+'天前 '+time;
+    // ts format: "2026-06-18 16:44"
+    const [date, time] = ts.split(' ');
+    const mmdd = date.slice(5).replace('-','/'); // "06/18"
+    return mmdd + ' ' + time;
   }
   list.innerHTML=events.map(e=>{
     const o=ORDERS.find(x=>x.id===e.orderId);
