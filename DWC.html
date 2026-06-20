@@ -257,6 +257,7 @@ body{background:#cfd8e3;display:flex;justify-content:center;min-height:100vh;}
 .banner.verified{background:#f0fdf4;border:1px solid #bbf7d0;color:#166534;}
 .banner.rejected{background:#fff1f2;border:1px solid #fecdd3;color:#9f1239;}
 .banner.approved{background:#d1fae5;border:1px solid #6ee7b7;color:#065f46;}
+.banner.second-visit{background:#f0f9ff;border:1px solid #bae6fd;color:#075985;}
 .modal-mask{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;z-index:50;padding:24px;}
 .modal-mask.show{display:flex;}
 .modal{background:#fff;border-radius:14px;padding:22px;width:100%;max-width:340px;}
@@ -588,6 +589,28 @@ body{background:#cfd8e3;display:flex;justify-content:center;min-height:100vh;}
     <div class="modal-btns">
       <button class="btn secondary" onclick="discardAndBack()">不儲存</button>
       <button class="btn warn" onclick="saveDraftAndBack()">存草稿</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-mask" id="modal-second-visit">
+  <div class="modal">
+    <h3>申請二次入店</h3>
+    <div style="margin-bottom:12px;">
+      <label style="font-size:13px;font-weight:600;display:block;margin-bottom:4px;">原因 <span style="color:#ef4444;">*</span></label>
+      <textarea id="sv-reason" rows="3" placeholder="請說明申請二次入店的原因…" style="width:100%;border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:14px;resize:none;box-sizing:border-box;"></textarea>
+    </div>
+    <div style="margin-bottom:12px;">
+      <label style="font-size:13px;font-weight:600;display:block;margin-bottom:4px;">預計二次入店日期（選填）</label>
+      <input type="date" id="sv-date" style="width:100%;border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:14px;box-sizing:border-box;">
+    </div>
+    <div style="margin-bottom:16px;">
+      <label style="font-size:13px;font-weight:600;display:block;margin-bottom:4px;">預計時間（選填）</label>
+      <input type="time" id="sv-time" style="width:100%;border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:14px;box-sizing:border-box;">
+    </div>
+    <div class="modal-btns">
+      <button class="btn secondary" onclick="closeModal('modal-second-visit')">取消</button>
+      <button class="btn primary" onclick="confirmSecondVisit()">送出申請</button>
     </div>
   </div>
 </div>
@@ -951,7 +974,7 @@ function render(){
     else if(rs === 'verified')  badges = '<span class="status-badge verified">🔖 待驗收</span>';
     else if(rs === 'rejected')  badges = '<span class="status-badge rejected">❌ 覆核未過</span>';
     else if(rs === 'sent')      badges = '<span class="status-badge sent">📤 待覆核</span>';
-    else if(rs === 'draft')     badges = '<span class="status-badge draft">📝 草稿未送出</span><span class="status-badge scheduled" style="margin-left:6px;">處理中</span>';
+    else if(rs === 'draft')     badges = '<span class="status-badge draft">暫存</span><span class="status-badge scheduled" style="margin-left:6px;">處理中</span>';
     else if(rs === 'scheduled') badges = '<span class="status-badge scheduled">已安排</span>';
     else                        badges = '<span class="status-badge pending">待處理</span>';
     return '<div class="order-card" data-cat="'+o.cat+'" onclick="openOrder(\''+o.id+'\')">'+
@@ -978,7 +1001,7 @@ function getRuntimeStatus(id, defaultStatus){
   }
   return defaultStatus;
 }
-const STATUS_LABEL = {today:'今日施作', draft:'草稿未送出', pending:'待處理', scheduled:'已安排', sent:'待覆核', verified:'待驗收', rejected:'覆核未過', approved:'已驗收'};
+const STATUS_LABEL = {today:'今日施作', draft:'暫存', pending:'待處理', scheduled:'已安排', sent:'待覆核', verified:'待驗收', rejected:'覆核未過', approved:'已驗收'};
 
 /* ── Groups page ── */
 function renderGroups(){
@@ -1117,7 +1140,7 @@ function getOrderState(id){
       status: (o && o.status==='draft') ? 'draft' : 'new',
       arrive:'', leave:'', note:'',
       photos:{'施工前':[],'施工後':[],'驗收單':[],'其他':[]},
-      equips:[], removedEquips:[], draftTime:'', sentTime:'', reminder:''
+      equips:[], removedEquips:[], draftTime:'', sentTime:'', reminder:'', secondVisit:null
     };
   }
   return orderStates[id];
@@ -1192,9 +1215,9 @@ function renderDetailActions(){
       : '<button class="btn ghost-blue small" onclick="openAssignModal(\'assign\')">指定工程師</button>';
     btnArea.innerHTML = engBtn +
       '<button class="btn warn small" onclick="openAssignModal(\'team\')">變更派遣工班</button>' +
-      '<button class="btn warn small">申請二次入店</button>';
+      '<button class="btn warn small" onclick="openSecondVisitModal()">申請二次入店</button>';
   } else {
-    btnArea.innerHTML = '<button class="btn warn small">申請二次入店</button>';
+    btnArea.innerHTML = '<button class="btn warn small" onclick="openSecondVisitModal()">申請二次入店</button>';
   }
 
   /* 預計入店日期 — 兩種角色都可編輯 */
@@ -1300,6 +1323,26 @@ function openAssignModal(mode){
   $('modal-engineer').classList.add('show');
 }
 
+function openSecondVisitModal(){
+  const sv = state.secondVisit;
+  $('sv-reason').value = sv ? sv.reason : '';
+  $('sv-date').value   = sv ? (sv.date||'') : '';
+  $('sv-time').value   = sv ? (sv.time||'') : '';
+  $('modal-second-visit').classList.add('show');
+}
+function confirmSecondVisit(){
+  const reason = ($('sv-reason').value||'').trim();
+  if(!reason){ showToast('請填寫無法完成施工的原因'); return; }
+  const date = $('sv-date').value||'';
+  const time = $('sv-time').value||'';
+  const ts = new Date().toLocaleDateString('sv-SE')+' '+new Date().toLocaleTimeString('zh-TW',{hour:'2-digit',minute:'2-digit',hour12:false});
+  state.secondVisit = {reason, date, time, ts};
+  closeModal('modal-second-visit');
+  renderDetailBanner();
+  showToast('二次入店申請已送出');
+  addNotifEvent('資訊異動', currentOrderId, '申請二次入店：'+reason);
+}
+
 function selectEngineer(name){
   const o = ORDERS.find(x => x.id === currentOrderId);
   if(o){ o.engineer = name; $('d-engineer').textContent = name; }
@@ -1352,6 +1395,11 @@ function renderDetailBanner(){
     area.innerHTML = '<div class="banner approved">✅ <span>已驗收完成（'+state.approvedTime+'）</span></div>';
   } else {
     area.innerHTML = '';
+  }
+  if(state.secondVisit){
+    const sv = state.secondVisit;
+    const timeStr = sv.date ? (sv.date + (sv.time ? ' ' + sv.time : '')) : '時間未定';
+    area.innerHTML += '<div class="banner second-visit" style="margin-top:8px;">🔁 <span><b>二次入店申請</b>（'+sv.ts+'）<br>原因：'+sv.reason+'<br>預計入店：'+timeStr+'</span></div>';
   }
   renderDetailActions();
 }
@@ -1908,15 +1956,26 @@ function renderSchedule(){
   }
   orders.sort((a,b) => a.expectedDate.localeCompare(b.expectedDate));
 
+  /* group by expectedDate */
+  const groups = {};
+  orders.forEach(o => { if(!groups[o.expectedDate]) groups[o.expectedDate]=[]; groups[o.expectedDate].push(o); });
+
+  /* add second visit entries */
+  ORDERS.forEach(o => {
+    const sv = orderStates[o.id] && orderStates[o.id].secondVisit;
+    if(!sv || !sv.date || !isSameMonth(sv.date, scheduleMonth)) return;
+    if(currentRole === 'engineer' && o.engineer !== currentEngineer) return;
+    if(currentRole === 'foreman' && o.team !== currentForemanTeam) return;
+    if(scheduleEngineer !== 'all' && o.engineer !== scheduleEngineer) return;
+    if(!groups[sv.date]) groups[sv.date] = [];
+    groups[sv.date].push(Object.assign({}, o, {_secondVisit:true, _svTime:sv.time}));
+  });
+
   const list = $('schedule-list');
-  if(!orders.length){
+  if(!Object.keys(groups).length){
     list.innerHTML = '<div class="schedule-empty"><div style="font-size:40px;margin-bottom:10px;">📅</div><p>本月沒有排程工單</p></div>';
     return;
   }
-
-  /* group by date */
-  const groups = {};
-  orders.forEach(o => { if(!groups[o.expectedDate]) groups[o.expectedDate]=[]; groups[o.expectedDate].push(o); });
 
   let html = '', lastWeekLabel = '';
   Object.keys(groups).sort().forEach(dateStr => {
@@ -1936,7 +1995,7 @@ function renderSchedule(){
       '<div class="sch-events">'+
         groups[dateStr].map(o =>
           '<div class="sch-event" data-cat="'+o.cat+'" onclick="openOrder(\''+o.id+'\',\'my\')">'+
-            '<div class="sch-event-store">'+o.store+(o.venue?'<span style="font-size:11px;font-weight:600;background:rgba(255,255,255,.3);border-radius:99px;padding:1px 7px;margin-left:6px;">'+o.venue+'</span>':'')+(o.network?'<span style="font-size:11px;font-weight:600;background:rgba(255,255,255,.25);border-radius:99px;padding:1px 7px;margin-left:4px;">'+o.network+'</span>':'')+'</div>'+
+            '<div class="sch-event-store">'+o.store+(o._secondVisit?'<span style="font-size:11px;font-weight:700;background:rgba(255,255,255,.35);border-radius:99px;padding:1px 7px;margin-left:6px;">🔁 二次入店'+(o._svTime?' '+o._svTime:'')+'</span>':'')+(o.venue?'<span style="font-size:11px;font-weight:600;background:rgba(255,255,255,.3);border-radius:99px;padding:1px 7px;margin-left:6px;">'+o.venue+'</span>':'')+(o.network?'<span style="font-size:11px;font-weight:600;background:rgba(255,255,255,.25);border-radius:99px;padding:1px 7px;margin-left:4px;">'+o.network+'</span>':'')+'</div>'+
             '<div class="sch-event-meta">工單 #'+o.id+'</div>'+
             (o.address ? '<div class="sch-event-meta" style="opacity:.8;">'+o.address+'</div>' : '')+
             ((currentRole==='admin'||currentRole==='foreman') && scheduleEngineer==='all'
