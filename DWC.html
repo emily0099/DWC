@@ -74,6 +74,7 @@ body{background:#cfd8e3;display:flex;justify-content:center;min-height:100vh;}
 .filter-pill[data-filter="rejected"].active{background:#fff1f2;border-color:#dc2626;color:#dc2626;}
 .filter-pill[data-filter="approved"].active{background:#d1fae5;border-color:#059669;color:#065f46;}
 .filter-pill[data-filter="inspect-failed"].active{background:#fff7ed;border-color:#ea580c;color:#c2410c;}
+.filter-pill[data-filter="cancelled"].active{background:#f1f5f9;border-color:#64748b;color:#475569;}
 .date-filter-row{display:flex;align-items:center;gap:8px;padding:8px 14px 0;}
 .date-filter-label{font-size:12px;color:var(--muted);font-weight:500;flex-shrink:0;}
 .date-filter-input{font-size:13px;font-weight:600;border:1px solid var(--line);border-radius:99px;padding:6px 12px;color:var(--text);background:#fff;cursor:pointer;outline:none;min-width:0;flex:1;}
@@ -115,6 +116,7 @@ body{background:#cfd8e3;display:flex;justify-content:center;min-height:100vh;}
 .status-badge.rejected{background:#fee2e2;color:#991b1b;}
 .status-badge.approved{background:#d1fae5;color:#065f46;}
 .status-badge.inspect-failed{background:#fff7ed;color:#c2410c;}
+.status-badge.cancelled{background:#f1f5f9;color:#475569;}
 
 /* ── Empty ── */
 .empty{text-align:center;padding:50px 20px;color:var(--muted);}
@@ -321,6 +323,7 @@ body{background:#cfd8e3;display:flex;justify-content:center;min-height:100vh;}
     <button class="filter-pill" data-filter="verified" onclick="setFilter('verified')">待驗收</button>
     <button class="filter-pill" data-filter="inspect-failed" onclick="setFilter('inspect-failed')">驗收未過</button>
     <button class="filter-pill" data-filter="approved" onclick="setFilter('approved')">已驗收</button>
+    <button class="filter-pill" data-filter="cancelled" onclick="setFilter('cancelled')">取消</button>
   </div>
   <div class="filters" id="team-filters"></div>
   <div class="date-filter-row">
@@ -965,7 +968,7 @@ function render(){
     if(curTeam !== 'all' && o.team !== curTeam) return false;
     if(curFilter === 'today' && o.specDate !== new Date().toLocaleDateString('sv-SE')) return false;
     if(curFilter === 'pending' && getRuntimeStatus(o.id, o.status) !== 'pending') return false;
-    if(['draft','scheduled','sent','verified','rejected','approved','inspect-failed'].includes(curFilter) && getRuntimeStatus(o.id, o.status) !== curFilter) return false;
+    if(['draft','scheduled','sent','verified','rejected','approved','inspect-failed','cancelled'].includes(curFilter) && getRuntimeStatus(o.id, o.status) !== curFilter) return false;
     if(curDateFilter && o.dispatchDate !== curDateFilter) return false;
     if(curSpecFilter === 'none' && o.specDate) return false;
     if(curSpecFilter && curSpecFilter !== 'none' && o.specDate !== curSpecFilter) return false;
@@ -991,7 +994,8 @@ function render(){
     const rs = getRuntimeStatus(o.id, o.status);
     let badges = '';
     const todayStr = new Date().toLocaleDateString('sv-SE');
-    if(rs === 'approved')  badges = '<span class="status-badge approved">✅ 已驗收</span>';
+    if(rs === 'cancelled') badges = '<span class="status-badge cancelled">取消</span>';
+    else if(rs === 'approved')  badges = '<span class="status-badge approved">✅ 已驗收</span>';
     else if(rs === 'inspect-failed') badges = '<span class="status-badge inspect-failed">驗收未過</span>';
     else if(rs === 'verified')  badges = '<span class="status-badge verified">🔖 待驗收</span>';
     else if(rs === 'rejected')  badges = '<span class="status-badge rejected">❌ 覆核未過</span>';
@@ -1023,7 +1027,7 @@ function getRuntimeStatus(id, defaultStatus){
   }
   return defaultStatus;
 }
-const STATUS_LABEL = {today:'今日施作', draft:'暫存', pending:'待處理', scheduled:'已安排', sent:'待覆核', verified:'待驗收', 'inspect-failed':'驗收未過', rejected:'覆核未過', approved:'已驗收'};
+const STATUS_LABEL = {today:'今日施作', draft:'暫存', pending:'待處理', scheduled:'已安排', sent:'待覆核', verified:'待驗收', 'inspect-failed':'驗收未過', rejected:'覆核未過', approved:'已驗收', cancelled:'取消'};
 
 /* ── Groups page ── */
 function renderGroups(){
