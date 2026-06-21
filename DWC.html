@@ -745,24 +745,26 @@ const NOTIF_EVENTS = [
 
 /* ── Home page state ── */
 let curCat = 'all', curFilter = 'all', curTeam = 'all', curDateFilter = '', curSpecFilter = ''; // curSpecFilter: ''|'none'|'YYYY-MM-DD'
+const PAGE_SIZE = 20;
+let curPage = 1;
 
 function setCat(cat){
-  curCat = cat;
+  curCat = cat; curPage = 1;
   document.querySelectorAll('.cat-chip').forEach(c => c.classList.toggle('active', c.dataset.cat === cat));
   render();
 }
 function setFilter(f){
-  curFilter = f;
+  curFilter = f; curPage = 1;
   document.querySelectorAll('.filter-pill').forEach(c => c.classList.toggle('active', c.dataset.filter === f));
   render();
 }
 function setTeam(team){
-  curTeam = team;
+  curTeam = team; curPage = 1;
   document.querySelectorAll('.team-pill').forEach(c => c.classList.toggle('active', c.dataset.team === team));
   render();
 }
 function setDateFilter(val){
-  curDateFilter = val;
+  curDateFilter = val; curPage = 1;
   $('date-filter-clear').classList.toggle('show', !!val);
   render();
 }
@@ -807,7 +809,7 @@ function renderTeamFilters(){
     '</button>'
   ).join('');
 }
-document.getElementById('search-input').addEventListener('input', render);
+document.getElementById('search-input').addEventListener('input', () => { curPage = 1; render(); });
 
 function getOverdueOrders(){
   const today = new Date().toLocaleDateString('sv-SE');
@@ -991,7 +993,9 @@ function render(){
     list.innerHTML = '<div class="empty"><div class="icon">🔍</div><p>找不到符合的工單。</p></div>';
     return;
   }
-  list.innerHTML = items.map(o => {
+  const visible = items.slice(0, curPage * PAGE_SIZE);
+  const hasMore = visible.length < items.length;
+  list.innerHTML = visible.map(o => {
     const rs = getRuntimeStatus(o.id, o.status);
     let badges = '';
     const todayStr = new Date().toLocaleDateString('sv-SE');
@@ -1016,8 +1020,11 @@ function render(){
       '</div>'+
       '<div class="status-row">'+badges+'</div>'+
     '</div>';
-  }).join('');
+  }).join('') + (hasMore
+    ? '<div style="padding:16px;text-align:center;"><button class="btn secondary" style="width:100%;" onclick="loadMore()">載入更多（還有 '+(items.length - visible.length)+' 筆）</button></div>'
+    : '');
 }
+function loadMore(){ curPage++; render(); }
 
 function getRuntimeStatus(id, defaultStatus){
   const rs = orderStates[id];
