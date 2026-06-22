@@ -230,7 +230,7 @@ body{background:#cfd8e3;display:flex;justify-content:center;min-height:100vh;}
 .photo-summary .chip b{color:var(--blue);}
 .equip-item{border:1px solid var(--line);border-radius:8px;padding:12px;margin-top:10px;position:relative;background:#fafbfc;}
 .equip-item.removed{border-color:#fca5a5;background:#fff5f5;}
-.equip-item .del-eq{position:absolute;top:8px;right:8px;background:none;border:none;color:var(--red);font-size:14px;cursor:pointer;font-weight:700;}
+.equip-item .del-eq{position:absolute;top:10px;right:10px;background:#fff0f0;border:1px solid #fecaca;color:#dc2626;font-size:12px;font-weight:600;cursor:pointer;border-radius:99px;padding:3px 10px;}
 .equip-item .equip-row{display:flex;gap:8px;margin-bottom:8px;}
 .equip-item .equip-row:last-child{margin-bottom:0;}
 .equip-item input,.equip-item select{flex:1;border:1px solid var(--line);border-radius:6px;padding:9px 10px;font-size:14px;background:#fff;}
@@ -1576,18 +1576,37 @@ function searchEquipAdd(q){
   if(!matches.length){ res.innerHTML='<div style="padding:12px;text-align:center;color:var(--muted);font-size:14px;">查無設備，可使用手動新增</div>'; return; }
   res.innerHTML=matches.map(e=>{
     const safe=(s)=>s.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
-    return '<div class="equip-db-item" onclick="selectEquipAdd(\''+safe(e.id)+'\',\''+safe(e.type)+'\',\''+safe(e.brand)+'\',\''+safe(e.model)+'\')">'+
+    return '<div class="equip-db-item" id="eai-'+esc(e.id)+'">'+
       '<div class="eq-info">'+
         '<div class="eq-type-row"><span class="eq-type">'+esc(e.type)+'</span></div>'+
         '<div class="eq-main">'+esc(e.brand)+' '+esc(e.model)+'</div>'+
         '<div class="eq-id">'+esc(e.id)+'</div>'+
       '</div>'+
-      '<button class="eq-btn add">選取</button>'+
+      '<button class="eq-btn add" onclick="pickEquipArea(\''+safe(e.id)+'\',\''+safe(e.type)+'\',\''+safe(e.brand)+'\',\''+safe(e.model)+'\',this)">選取</button>'+
     '</div>';
   }).join('');
 }
-function selectEquipAdd(id,type,brand,model){
-  state.equips.push({id,type,brand,model,qty:1});
+function pickEquipArea(id,type,brand,model,btn){
+  const item=btn.closest('.equip-db-item');
+  btn.style.display='none';
+  const order=ORDERS.find(o=>o.id===currentOrderId);
+  const storeNo=order?order.storeNo:'';
+  const areas=[...new Set(EQUIP_DB.filter(e=>e.storeNo===storeNo&&e.area).map(e=>e.area))].sort();
+  const safe=s=>s.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+  const optHtml=areas.map(a=>'<option value="'+esc(a)+'">'+esc(a)+'</option>').join('');
+  const picker=document.createElement('div');
+  picker.style.cssText='margin-top:8px;border-top:1px solid var(--line);padding-top:8px;';
+  picker.innerHTML=
+    '<div style="font-size:12px;font-weight:600;color:var(--muted);margin-bottom:6px;">DWC安裝區域</div>'+
+    '<select id="equip-area-sel" style="width:100%;box-sizing:border-box;border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:14px;background:#fff;color:var(--text);margin-bottom:8px;">'+
+      '<option value="">（不選擇）</option>'+optHtml+
+    '</select>'+
+    '<button class="btn primary" style="width:100%;" onclick="confirmEquipArea(\''+safe(id)+'\',\''+safe(type)+'\',\''+safe(brand)+'\',\''+safe(model)+'\')">確認新增</button>';
+  item.appendChild(picker);
+}
+function confirmEquipArea(id,type,brand,model){
+  const area=($('equip-area-sel').value||'').trim();
+  state.equips.push({id,type,brand,model,qty:1,area});
   renderEquips(); dirty=true;
   closeEquipAddPanel();
 }
@@ -1787,7 +1806,8 @@ function renderEquips(){
       d.innerHTML='<button class="del-eq" onclick="delEquip('+i+')">刪除</button>'+
         '<div style="margin-bottom:2px;"><span class="eq-type">'+esc(eq.type)+'</span></div>'+
         '<div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:2px;">'+esc(eq.brand)+' '+esc(eq.model)+'</div>'+
-        '<div style="font-size:12px;color:var(--muted);margin-bottom:8px;">'+esc(eq.id)+'</div>'+
+        '<div style="font-size:12px;color:var(--muted);margin-bottom:4px;">'+esc(eq.id)+'</div>'+
+        (eq.area?'<div style="font-size:12px;color:#2563eb;font-weight:600;margin-bottom:8px;">安裝區域：'+esc(eq.area)+'</div>':'<div style="margin-bottom:8px;"></div>')+
         '<div class="equip-row" style="margin-bottom:0;">'+
           '<span style="font-size:13px;color:var(--muted);flex:1;">數量</span>'+
           '<span style="font-size:16px;font-weight:700;">1</span>'+
