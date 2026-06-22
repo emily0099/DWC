@@ -579,7 +579,7 @@ body{background:#cfd8e3;display:flex;justify-content:center;min-height:100vh;}
     <p id="role-modal-desc">選擇登入身份以切換對應權限（原型示範用）</p>
     <div id="role-modal-btns" class="modal-btns" style="flex-direction:column;gap:10px;">
       <button class="btn primary" onclick="switchRoleTo('admin',true)">管理者</button>
-      <button class="btn primary" style="background:#7c3aed;" onclick="showForemanPicker()">主管</button>
+      <button class="btn primary" style="background:#7c3aed;" onclick="showForemanPicker()">工頭</button>
       <button class="btn secondary" onclick="showEngineerPicker()">工程師</button>
     </div>
     <div id="role-eng-list" style="display:none;max-height:260px;overflow-y:auto;margin-bottom:14px;"></div>
@@ -1043,7 +1043,7 @@ function renderGroups(){
   document.getElementById('group-list').innerHTML = visibleGroups.map(g =>
     '<div class="group-card">'+
       '<div class="g-title"><span class="dot"></span>群組：'+g.name+'</div>'+
-      '<div class="g-members"><b>主管：</b>'+g.foreman+'</div>'+
+      '<div class="g-members"><b>工頭：</b>'+g.foreman+'</div>'+
       '<div class="g-members"><b>管理者：</b>'+g.managers.join('、')+'</div>'+
       '<div class="g-members"><b>工程師：</b>'+g.engineers.join('、')+'</div>'+
     '</div>'
@@ -1119,7 +1119,7 @@ function showEngineerPicker(){
   $('role-eng-list').style.display = '';
 }
 function showForemanPicker(){
-  $('role-modal-title').textContent = '選擇主管';
+  $('role-modal-title').textContent = '選擇工頭';
   $('role-modal-desc').style.display = 'none';
   $('role-modal-btns').style.display = 'none';
   $('role-eng-back').style.display = '';
@@ -1146,7 +1146,7 @@ function switchRoleTo(role, fromModal, eng){
   currentRole = role;
   if(eng) currentEngineer = eng;
   const badge = $('role-badge');
-  badge.textContent = role === 'admin' ? '管理者' : role === 'foreman' ? '主管 '+currentForeman : '工程師 '+currentEngineer;
+  badge.textContent = role === 'admin' ? '管理者' : role === 'foreman' ? '工頭 '+currentForeman : '工程師 '+currentEngineer;
   badge.className = 'role-badge' + (role === 'engineer' ? ' is-engineer' : role === 'foreman' ? ' is-foreman' : '');
   document.querySelectorAll('.nav-groups-item').forEach(el => {
     el.style.display = (role === 'admin' || role === 'foreman') ? '' : 'none';
@@ -1349,7 +1349,7 @@ function openAssignModal(mode){
     const sourceGroups = currentRole === 'foreman'
       ? GROUPS.filter(g => g.name === currentForemanTeam)
       : GROUPS;
-    const foremen = sourceGroups.map(g => ({name:g.foreman, team:g.name, role:'主管'}));
+    const foremen = sourceGroups.map(g => ({name:g.foreman, team:g.name, role:'工頭'}));
     const engineers = sourceGroups.flatMap(g => g.engineers.map(m => ({name:m, team:g.name, role:'工程師'})));
     const all = [...foremen, ...engineers];
     const unique = [...new Map(all.map(e => [e.name, e])).values()];
