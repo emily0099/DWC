@@ -1611,13 +1611,14 @@ function confirmEquipArea(id,type,brand,model){
   closeEquipAddPanel();
 }
 function equipAddManual(){
-  state.equips.push({ids:[''],type:'',brand:'',model:'',qty:1,_manual:true});
+  state.equips.push({ids:[''],areas:[''],type:'',brand:'',model:'',qty:1,_manual:true});
   renderEquips(); dirty=true;
   closeEquipAddPanel();
 }
 function delEquip(i){ state.equips.splice(i,1); renderEquips(); dirty=true; }
 function updEquip(i,key,val){ state.equips[i][key]=val; dirty=true; }
 function updEquipId(i,j,val){ if(!state.equips[i].ids) state.equips[i].ids=[]; state.equips[i].ids[j]=val; dirty=true; }
+function updEquipArea(i,j,val){ if(!state.equips[i].areas) state.equips[i].areas=[]; state.equips[i].areas[j]=val; dirty=true; }
 function updEquipType(i,val){ state.equips[i].type=val; state.equips[i].brand=''; state.equips[i].model=''; dirty=true; renderEquips(); }
 function pickBrandModel(i,brand,model){ state.equips[i].brand=brand; state.equips[i].model=model; dirty=true; renderEquips(); }
 function stepEquipQty(i,delta){
@@ -1629,6 +1630,10 @@ function stepEquipQty(i,delta){
     while(ids.length<next) ids.push('');
     ids.length=next;
     eq.ids=ids;
+    const areas=eq.areas||[''];
+    while(areas.length<next) areas.push('');
+    areas.length=next;
+    eq.areas=areas;
   }
   dirty=true; renderEquips();
 }
@@ -1746,6 +1751,10 @@ function renderRemovedEquipsList(){
 function renderEquips(){
   const list=$('equip-list');
   if(!state.equips.length){ list.innerHTML='<div class="readonly-note">尚未新增設備</div>'; return; }
+  const _order=ORDERS.find(o=>o.id===currentOrderId);
+  const _storeNo=_order?_order.storeNo:'';
+  const _storeAreas=[...new Set(EQUIP_DB.filter(e=>e.storeNo===_storeNo&&e.area).map(e=>e.area))].sort();
+  const _areaOptHtml='<option value="">安裝區域（選填）</option>'+_storeAreas.map(a=>'<option value="'+esc(a)+'">'+esc(a)+'</option>').join('');
   list.innerHTML='';
   state.equips.forEach((eq,i) => {
     const d=document.createElement('div');
@@ -1800,7 +1809,11 @@ function renderEquips(){
             '<input type="text" placeholder="型號" value="'+(eq.model||'').replace(/"/g,'&quot;')+'" oninput="updEquip('+i+',\'model\',this.value)" style="flex:1;">'+
           '</div>'
         :'')+
-        (eq.ids||['']).map((sid,j)=>'<div class="equip-row"><input type="text" placeholder="設備編號'+(eq.qty>1?' '+(j+1):'')+'" value="'+(sid||'').replace(/"/g,'&quot;')+'" oninput="updEquipId('+i+','+j+',this.value)" style="flex:1;"></div>').join('')+
+        (eq.ids||['']).map((sid,j)=>{
+          const areaVal=(eq.areas&&eq.areas[j])||'';
+          return '<div class="equip-row"><input type="text" placeholder="設備編號'+(eq.qty>1?' '+(j+1):'')+'" value="'+(sid||'').replace(/"/g,'&quot;')+'" oninput="updEquipId('+i+','+j+',this.value)" style="flex:1;"></div>'+
+            '<div class="equip-row" style="margin-top:-6px;"><select style="flex:1;font-size:13px;" onchange="updEquipArea('+i+','+j+',this.value)">'+_areaOptHtml.replace('value="'+areaVal+'"','value="'+areaVal+'" selected')+'</select></div>';
+        }).join('')+
         qtyStepperM;
     } else {
       d.innerHTML='<button class="del-eq" onclick="delEquip('+i+')">刪除</button>'+
